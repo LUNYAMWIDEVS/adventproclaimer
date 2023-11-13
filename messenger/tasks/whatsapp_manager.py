@@ -53,3 +53,46 @@ def send_batch_whatsapp_text(numbers,names,message):
             print(f"data: {data}")
         except (ConnectionError, Timeout, TooManyRedirects) as e:
             print(e)
+
+
+
+def send_batch_whatsapp_text_non_async(numbers,names,message):
+    for i,number in enumerate(numbers):
+        
+        headers = {
+            "Authorization": f"Bearer {API_TOKEN}",
+            "Content-Type": "application/json"
+        }
+        parameters = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": number,
+            "type": "template",
+            "template": {
+                "name": "present_truth_message",
+                "language": {"code": "en_gb"},
+                "components": [{
+                        "type":"body",
+                        "parameters":[
+                            {
+                                "type":"text",
+                                "text": names[i],
+                            },
+                            {
+                                "type":"text",
+                                "text": message
+                            }]
+                        
+                    }]
+                
+                }
+
+        }
+        session = Session()
+        session.headers.update(headers)
+        try:
+            response = session.post(URL, json=parameters)
+            data = json.loads(response.text)
+            print(f"data: {data}")
+        except (ConnectionError, Timeout, TooManyRedirects) as e:
+            print(e)

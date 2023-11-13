@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'froala_editor',
     'django_celery_beat',
     'messenger',
+    'health',
     'crispy_forms',
 ]
 
