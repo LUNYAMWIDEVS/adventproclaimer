@@ -205,16 +205,19 @@ def download_file(file_id, local_fd):
       print ('Download Complete')
       return
 
-def split_pdf(file_id,steps):
-    material = get_object_or_404(Material,file=file_id)
-    file_path = 'media/downloads/downloaded.pdf'
-    file = open(file_path, 'wb')
-    download_file(file_id,file)
+def split_pdf(file_path,steps):
+    # material = get_object_or_404(Material,file=file_id)
+    # file_path = 'media/downloads/downloaded.pdf'
+    # file = open(file_path, 'wb')
+    # download_file(file_id,file)
     pdf = PdfReader(file_path)
+    print(len(pdf.pages))
     ranges = [range(i,i+steps) for i in range(0,len(pdf.pages),steps)]
     for i,range_ in enumerate(ranges):
         pdf_writer = PdfWriter()
-        for page in list(range_):
+        for page in range_:
+            text = pdf.pages[page].extract_text()
+            print(text)
             pdf_writer.add_page(pdf.pages[page])
 
         output_filename = 'media/downloads/{}_page_{}.pdf'.format('download', i+1)
@@ -222,17 +225,17 @@ def split_pdf(file_id,steps):
         with open(output_filename, 'wb') as out:
             pdf_writer.write(out)
             out.close()
-        assignment = Assignment()
-        assignment.course_code = material.course_code
-        assignment.file = convert_pdf_gdocs(output_filename,f'test_{i}')
-        assignment.description = derive_text(assignment.file)
-        assignment.marks = steps
-        assignment.deadline = date.today() + timedelta(days=len(ranges))
-        assignment.save()
-        material.assignments.add(assignment)
-        material.save()
-        cleanup_folder('media/downloads/')
-        print('Created: {}'.format(output_filename))
+        # assignment = Assignment()
+        # assignment.course_code = material.course_code
+        # assignment.file = convert_pdf_gdocs(output_filename,f'test_{i}')
+        # assignment.description = derive_text(assignment.file)
+        # assignment.marks = steps
+        # assignment.deadline = date.today() + timedelta(days=len(ranges))
+        # assignment.save()
+        # material.assignments.add(assignment)
+        # material.save()
+        # cleanup_folder('media/downloads/')
+        # print('Created: {}'.format(output_filename))
     return len(os.listdir('media/downloads/'))
 
 

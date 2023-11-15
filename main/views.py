@@ -543,7 +543,7 @@ def scheduleCourseMaterial(request, code, id):
                     schedule, _ = CrontabSchedule.objects.get_or_create(
                         minute='30',
                         hour='06',
-                        day_of_week=f'{relative_date.isoweekday()}',
+                        day_of_week=f'*',
                         day_of_month=f'{relative_date.day}',
                         month_of_year=f'{relative_date.month}',
                     )
