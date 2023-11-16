@@ -536,8 +536,8 @@ def scheduleCourseMaterial(request, code, id):
                 material = get_object_or_404(Material,id=id)
                 assigments = [a.id for a in material.assignments.all()]
                 student = Student.objects.get(student_id=request.POST.get('user'))
-                for index,assignment in enumerate(assigments):
-                    assignment_link = request.build_absolute_uri(f'/assignment/{code}/{assignment}/')
+                for index,assignment in enumerate(material.assignments.all()):
+                    # assignment_link = request.build_absolute_uri(f'/assignment/{code}/{assignment}/')
                     schedule = None
                     relative_date = date.today() + timedelta(days=index+1)
                     schedule, _ = CrontabSchedule.objects.get_or_create(
@@ -552,18 +552,19 @@ def scheduleCourseMaterial(request, code, id):
                         # print(form['course_format'].value)
                         # print(request.POST.get('course_format'))
                         if request.POST.get('course_format') == 'W':
+                            # import pdb;pdb.set_trace()
                             PeriodicTask.objects.update_or_create(
                                 crontab=schedule,                  # we created this above.
-                                name=f'Send Assignment {str(uuid.uuid1())}--{index}',          # simply describes this periodic task.
+                                name=f'Send Assignment {assignment.id}--{index}',          # simply describes this periodic task.
                                 task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text',  # name of task.
-                                args=json.dumps([[student.phone_number], [student.name],assignment_link]),
+                                args=json.dumps([[student.phone_number], [student.name], assignment.description]),
                             )
                         if request.POST.get('course_format') == 'E':
                             PeriodicTask.objects.update_or_create(
                                 crontab=schedule,                  # we created this above.
                                 name=f'Send Assignment {str(uuid.uuid1())}--{index}',          # simply describes this periodic task.
                                 task='messenger.tasks.email_manager.send_newsletter',  # name of task.
-                                args=json.dumps([student.name, student.email,assignment_link]),
+                                args=json.dumps([student.name, student.email,assignment.description]),
                             )
                         
                     except ValidationError as err:

@@ -12,6 +12,8 @@ from django.conf import settings
 from django.shortcuts import get_object_or_404
 from .models import Assignment,Material
 from datetime import timedelta, date
+from .prompt import enrich_format_message
+from messenger.llm import query_gpt
 import shutil
 
 SCOPES = {
@@ -205,11 +207,11 @@ def download_file(file_id, local_fd):
       print ('Download Complete')
       return
 
-def split_pdf(file_path,steps):
-    # material = get_object_or_404(Material,file=file_id)
-    # file_path = 'media/downloads/downloaded.pdf'
-    # file = open(file_path, 'wb')
-    # download_file(file_id,file)
+def split_pdf(file_id,steps):
+    material = get_object_or_404(Material,file=file_id)
+    file_path = 'media/downloads/downloaded.pdf'
+    file = open(file_path, 'wb')
+    download_file(file_id,file)
     pdf = PdfReader(file_path)
     print(len(pdf.pages))
     ranges = [range(i,i+steps) for i in range(0,len(pdf.pages),steps)]
@@ -225,17 +227,20 @@ def split_pdf(file_path,steps):
         with open(output_filename, 'wb') as out:
             pdf_writer.write(out)
             out.close()
-        # assignment = Assignment()
-        # assignment.course_code = material.course_code
-        # assignment.file = convert_pdf_gdocs(output_filename,f'test_{i}')
-        # assignment.description = derive_text(assignment.file)
-        # assignment.marks = steps
-        # assignment.deadline = date.today() + timedelta(days=len(ranges))
-        # assignment.save()
-        # material.assignments.add(assignment)
-        # material.save()
-        # cleanup_folder('media/downloads/')
-        # print('Created: {}'.format(output_filename))
+
+        assignment = Assignment()
+        assignment.course_code = material.course_code
+        assignment.file = convert_pdf_gdocs(output_filename,f'test_{i}')
+        text_to_send = derive_text(assignment.file)
+        response = enrich_format_message(message=text_to_send)
+        assignment.description = response.get("choices")[0].get("message").get("content").strip("\n")  
+        assignment.marks = steps
+        assignment.deadline = date.today() + timedelta(days=len(ranges))
+        assignment.save()
+        material.assignments.add(assignment)
+        material.save()
+        cleanup_folder('media/downloads/')
+        print('Created: {}'.format(output_filename))
     return len(os.listdir('media/downloads/'))
 
 
