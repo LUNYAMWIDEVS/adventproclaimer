@@ -1,5 +1,6 @@
 import datetime
 import json
+import random
 import uuid
 from django.shortcuts import redirect, render,get_object_or_404
 from django.contrib.auth.decorators import login_required
@@ -11,7 +12,7 @@ from django.http import HttpResponseRedirect
 from .forms import AnnouncementForm, AssignmentForm, MaterialForm,SplitMaterialsForm,ScheduleMaterialForm
 from .helpers import upload_file,split_pdf
 from messenger.tasks.whatsapp_manager import send_batch_whatsapp_text
-from datetime import timedelta, date
+from datetime import timedelta, date, datetime, timezone
 from django_celery_beat.models import PeriodicTask, IntervalSchedule, CrontabSchedule
 from django.core.exceptions import ValidationError
 
@@ -529,20 +530,37 @@ def splitCourseMaterial(request, code,id):
 
 def scheduleCourseMaterial(request, code, id):
     error = None
+    gmt_offset = timedelta(hours=+3)
+    desired_timezone = timezone(gmt_offset)
+
+    
     if is_faculty_authorised(request, code):
         if request.method == 'POST':
             form = ScheduleMaterialForm(request.POST or None)
             if form.is_valid():
                 material = get_object_or_404(Material,id=id)
-                assigments = [a.id for a in material.assignments.all()]
+                assigments =material.assignments.all()
                 student = Student.objects.get(student_id=request.POST.get('user'))
-                for index,assignment in enumerate(material.assignments.all()):
-                    # assignment_link = request.build_absolute_uri(f'/assignment/{code}/{assignment}/')
+                morning_flag = True
+                for index,assignment in enumerate(assigments):
+                    # TODO: order the assignments
+                    # TODO: ensure the loop is not one assignment per day
                     schedule = None
-                    relative_date = date.today() + timedelta(days=index+1)
+                    relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1)
+                    random_minutes = random.randint(1,59)
+                    random_hour = None
+                    time_period = None
+                    if morning_flag:
+                        random_hour = random.randint(4, 7)  # morning devotion
+                        time_period = "Morning"
+                    else:
+                        random_hour = random.randint(18, 20)  # evening devotion
+                        time_period = "Evening"
+
+                    morning_flag = not morning_flag  # Toggle the flag
                     schedule, _ = CrontabSchedule.objects.get_or_create(
-                        minute='30',
-                        hour='06',
+                        minute=f'{random_minutes}',
+                        hour=f'{random_hour}',
                         day_of_week=f'*',
                         day_of_month=f'{relative_date.day}',
                         month_of_year=f'{relative_date.month}',
@@ -551,18 +569,19 @@ def scheduleCourseMaterial(request, code, id):
                         # import pdb;pdb.set_trace()
                         # print(form['course_format'].value)
                         # print(request.POST.get('course_format'))
+                        
                         if request.POST.get('course_format') == 'W':
                             # import pdb;pdb.set_trace()
                             PeriodicTask.objects.update_or_create(
                                 crontab=schedule,                  # we created this above.
-                                name=f'Send Assignment {assignment.id}--{index}',          # simply describes this periodic task.
+                                name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
                                 task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text',  # name of task.
                                 args=json.dumps([[student.phone_number], [student.name], assignment.description]),
                             )
                         if request.POST.get('course_format') == 'E':
                             PeriodicTask.objects.update_or_create(
                                 crontab=schedule,                  # we created this above.
-                                name=f'Send Assignment {str(uuid.uuid1())}--{index}',          # simply describes this periodic task.
+                                name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
                                 task='messenger.tasks.email_manager.send_newsletter',  # name of task.
                                 args=json.dumps([student.name, student.email,assignment.description]),
                             )

@@ -40,8 +40,8 @@ def generate_credentials_json():
         "token_uri":f"{os.getenv('token_uri').strip()}",
         "client_id":f"{os.getenv('client_id').strip()}",
         "client_secret":f"{os.getenv('client_secret').strip()}",
-        "scopes":["https://www.googleapis.com/auth/drive"],
-        "expiry":"2023-01-23T14:43:45.007305Z"
+        "scopes":["https://www.googleapis.com/auth/drive"]
+        # "expiry":"2023-01-23T14:43:45.007305Z"
         
     }
     docs = {
@@ -50,8 +50,8 @@ def generate_credentials_json():
         "token_uri":f"{os.getenv('token_uri').strip()}",
         "client_id":f"{os.getenv('client_id').strip()}",
         "client_secret":f"{os.getenv('client_secret').strip()}",
-        "scopes":['https://www.googleapis.com/auth/documents'],
-        "expiry":"2023-01-23T14:43:45.007305Z"
+        "scopes":['https://www.googleapis.com/auth/documents']
+        # "expiry":"2023-01-23T14:43:45.007305Z"
         
     }
     with open("drive.json","w") as write_file:
@@ -76,7 +76,8 @@ def get_creds(token_file,credentials_file,scopes):
     # The file token_drive.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    generate_credentials_json()
+    # import pdb;pdb.set_trace()
+    # generate_credentials_json()
     creds = None
     token_json = os.path.join(settings.BASE_DIR, token_file)
     credentials_json = os.path.join(settings.BASE_DIR, credentials_file)
@@ -232,7 +233,8 @@ def split_pdf(file_id,steps):
         assignment.course_code = material.course_code
         assignment.file = convert_pdf_gdocs(output_filename,f'test_{i}')
         text_to_send = derive_text(assignment.file)
-        response = enrich_format_message(message=text_to_send)
+        prompt = enrich_format_message(message=text_to_send)
+        response = query_gpt(prompt)
         assignment.description = response.get("choices")[0].get("message").get("content").strip("\n")  
         assignment.marks = steps
         assignment.deadline = date.today() + timedelta(days=len(ranges))
