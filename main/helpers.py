@@ -233,9 +233,9 @@ def split_pdf(file_id,steps):
         assignment.course_code = material.course_code
         assignment.file = convert_pdf_gdocs(output_filename,f'test_{i}')
         text_to_send = derive_text(assignment.file)
-        prompt = enrich_format_message(message=text_to_send)
-        response = query_gpt(prompt)
-        assignment.description = response.get("choices")[0].get("message").get("content").strip("\n")  
+        # prompt = enrich_format_message(message=text_to_send)
+        # response = query_gpt(prompt)
+        assignment.description = text_to_send
         assignment.marks = steps
         assignment.deadline = date.today() + timedelta(days=len(ranges))
         assignment.save()

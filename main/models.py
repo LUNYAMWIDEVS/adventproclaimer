@@ -122,7 +122,7 @@ class Assignment(models.Model):
 
     class Meta:
         verbose_name_plural = "Assignments"
-        ordering = ['-datetime']
+        ordering = ['datetime']
 
     def __str__(self):
         return self.file
@@ -184,7 +184,7 @@ class Submission(models.Model):
     class Meta:
         unique_together = ('assignment', 'student')
         verbose_name_plural = "Submissions"
-        ordering = ['datetime']
+        ordering = ['-datetime']
 
 
 class Material(models.Model):
