@@ -12,7 +12,7 @@ ENDPOINT = os.getenv('ENDPOINT').strip()
 API_TOKEN = os.getenv('API_TOKEN').strip()
 URL = BASE_URL + API_VERSION + SENDER + ENDPOINT
 
-def cut_string_to_max_length(input_string, max_length=1024):
+def cut_string_to_max_length(input_string, max_length=912):
     if len(input_string) > max_length:
         return input_string[:max_length]
     return input_string
