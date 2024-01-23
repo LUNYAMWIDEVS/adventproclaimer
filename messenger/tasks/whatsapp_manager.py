@@ -12,8 +12,14 @@ ENDPOINT = os.getenv('ENDPOINT').strip()
 API_TOKEN = os.getenv('API_TOKEN').strip()
 URL = BASE_URL + API_VERSION + SENDER + ENDPOINT
 
+def cut_string_to_max_length(input_string, max_length=1024):
+    if len(input_string) > max_length:
+        return input_string[:max_length]
+    return input_string
+
 @shared_task
 def send_batch_whatsapp_text(numbers,names,message):
+    message = ' '.join(message.split())
     for i,number in enumerate(numbers):
         
         headers = {
@@ -37,7 +43,7 @@ def send_batch_whatsapp_text(numbers,names,message):
                             },
                             {
                                 "type":"text",
-                                "text": message
+                                "text": cut_string_to_max_length(message.replace("\n",""))
                             }]
                         
                     }]
