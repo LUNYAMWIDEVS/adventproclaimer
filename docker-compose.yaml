@@ -20,7 +20,7 @@ services:
     image: postgres:latest
     container_name: postgres-container
     environment:
-      POSTGRES_USER: postgres
+      POSTGRES_USER: martin
       POSTGRES_PASSWORD: adventproclaimer
       POSTGRES_DB: presenttrutherz
     volumes:
