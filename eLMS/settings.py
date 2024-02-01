@@ -101,16 +101,26 @@ WSGI_APPLICATION = 'eLMS.wsgi.application'
 #     }
 # }
 
+# settings.py
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_DBNAME").strip(),
-        "USER": 'postgres',
-        "PASSWORD": 'adventproclaimer',
-        "HOST": 'postgres',
-        "PORT": 5432,
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / "db.sqlite3",  # Assuming db.sqlite3 is in the project's base directory
     }
 }
+
+
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.getenv("POSTGRES_DBNAME").strip(),
+#         "USER": 'postgres',
+#         "PASSWORD": 'adventproclaimer',
+#         "HOST": 'postgres',
+#         "PORT": 5432,
+#     }
+# }
 
 
 
