@@ -21,8 +21,8 @@ services:
     container_name: postgres-container
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: boostedchat
-      POSTGRES_DB: scrapper
+      POSTGRES_PASSWORD: adventproclaimer
+      POSTGRES_DB: presenttrutherz
     volumes:
       - /opt/postgres-data:/var/lib/postgresql/data
     ports:
