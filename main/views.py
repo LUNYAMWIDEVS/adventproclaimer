@@ -547,14 +547,14 @@ def scheduleCourseMaterial(request, code, id):
                     # TODO: ensure the loop is not one assignment per day
                     schedule = None
                     relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1)
-                    random_minutes = random.randint(1,59)
+                    random_minutes = random.randint(1,2)
                     random_hour = None
                     time_period = None
                     if morning_flag:
-                        random_hour = random.randint(4, 7)  # morning devotion
+                        random_hour = random.randint(1, 2)  # morning devotion
                         time_period = "Morning"
                     else:
-                        random_hour = random.randint(18, 20)  # evening devotion
+                        random_hour = random.randint(1, 2)  # evening devotion
                         time_period = "Evening"
 
                     morning_flag = not morning_flag  # Toggle the flag
