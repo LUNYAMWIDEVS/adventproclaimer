@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-_@876m&g2$*55!90p5cvqfsb)_f07n#33vhp2^3ggabcx#zyjr
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['presenttruth.herokuapp.com','127.0.0.1','www.presenttruthers.com','presenttruthers.com','34.42.99.68','34.16.171.81']
+ALLOWED_HOSTS = ['presenttruth.herokuapp.com','127.0.0.1','www.presenttruthers.com','presenttruthers.com','34.42.99.68','34.16.171.81',"34.125.149.128"]
 
 CSRF_TRUSTED_ORIGINS = ["https://presenttruth.herokuapp.com",'http://34.42.99.68']
 
