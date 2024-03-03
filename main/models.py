@@ -128,7 +128,7 @@ class Assignment(models.Model):
         return self.file
 
     def delete(self, *args, **kwargs):
-        self.file.delete()
+        # self.file.delete()
         super().delete(*args, **kwargs)
 
     def post_date(self):
@@ -175,7 +175,7 @@ class Submission(models.Model):
         return self.datetime.strftime("%d-%b-%y, %I:%M %p")
 
     def delete(self, *args, **kwargs):
-        self.file.delete()
+        # self.file.delete()
         super().delete(*args, **kwargs)
 
     def __str__(self):
