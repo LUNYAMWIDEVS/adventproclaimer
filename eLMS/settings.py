@@ -34,6 +34,8 @@ CSRF_TRUSTED_ORIGINS = ["https://presenttruth.herokuapp.com",'http://34.42.99.68
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -50,6 +52,8 @@ INSTALLED_APPS = [
     'messenger',
     'health',
     'crispy_forms',
+    'payment',
+    'paypal.standard.ipn',
 ]
 
 MIDDLEWARE = [
@@ -87,7 +91,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'eLMS.wsgi.application'
 
-
+ASGI_APPLICATION = "eLMS.asgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
@@ -208,3 +212,16 @@ EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER').strip()
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD').strip()
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
+
+PAYPAL_RECEIVER_EMAIL = "lunyamwi777@gmail.com"
+PAYPAL_TEST = True  # Set to False for production
