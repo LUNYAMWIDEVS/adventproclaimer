@@ -1,0 +1,5 @@
+SIGNUP_SUCCESS_MESSAGE = "Thank you for registering with COVID Aid"
+DATA_VALIDATION_SUCCESS_MESSAGE = "User data validated Successfully"
+VERIFICATION_SUCCESS_MSG = "Congratulations! You have successfully activated your account."
+FETCH_SUCCESS_MESSAGE = "{} fetched successfully"
+UPDATED_SUCCESS_MESSAGE = "{} updated successfully"

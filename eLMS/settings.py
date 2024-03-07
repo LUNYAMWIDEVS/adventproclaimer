@@ -54,6 +54,9 @@ INSTALLED_APPS = [
     'crispy_forms',
     'payment',
     'paypal.standard.ipn',
+    'helpers',
+    'rest_framework',
+    'needs'
 ]
 
 MIDDLEWARE = [
@@ -225,3 +228,10 @@ CHANNEL_LAYERS = {
 
 PAYPAL_RECEIVER_EMAIL = "lunyamwi777@gmail.com"
 PAYPAL_TEST = True  # Set to False for production
+
+MPESA_CONSUMER_KEY = "test"
+MPESA_CONSUMER_SECRET= "test"
+MPESA_PASSKEY = "test"
+MPESA_SHORT_CODE = "test"
+MPESA_CALLBACK_URL = "https://example.com/"
+MPESA_API_URL='https://example.com/'
