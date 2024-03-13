@@ -30,7 +30,8 @@ def perform_transaction(payer_mobile_no, amount, payment_id):
     Perform Lipa na mpesa transaction
     """
     access_token = MpesaAccessToken.validated_mpesa_access_token
-    api_url = settings.MPESA_STKPUSH
+    api_url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+    print(api_url)
     headers = {"Authorization": "Bearer %s" % access_token}
     request = {
         "BusinessShortCode": LipanaMpesaPpassword.Business_short_code,

@@ -2,6 +2,7 @@ import datetime
 from django.shortcuts import render, redirect
 from .models import Quiz, Question, StudentAnswer
 from main.models import Student, Course, Faculty
+from datetime import timezone
 from main.views import is_faculty_authorised, is_student_authorised
 from django.contrib import messages
 
@@ -64,7 +65,7 @@ def allQuizzes(request, code):
         quizzes = Quiz.objects.filter(course=course)
         for quiz in quizzes:
             quiz.total_questions = Question.objects.filter(quiz=quiz).count()
-            if quiz.start < datetime.datetime.now():
+            if quiz.start < datetime.datetime.now(timezone.utc):
                 quiz.started = True
             else:
                 quiz.started = False

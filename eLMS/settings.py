@@ -229,9 +229,11 @@ CHANNEL_LAYERS = {
 PAYPAL_RECEIVER_EMAIL = "lunyamwi777@gmail.com"
 PAYPAL_TEST = True  # Set to False for production
 
-MPESA_CONSUMER_KEY = "test"
-MPESA_CONSUMER_SECRET= "test"
-MPESA_PASSKEY = "test"
-MPESA_SHORT_CODE = "test"
+MPESA_CONSUMER_KEY = "H8tYcndchZAuT4hwrwr6xydFDxQAfyoA1A1FrGRvI1CwzwwV"
+MPESA_CONSUMER_SECRET= "IpM3jRJJSaoN7tX6AkUGwupS1gYgPmoIEH7iocxK7BHGqZAlTmnRG65HfjoF5lKc"
+MPESA_PASSKEY = "SDh0WWNuZGNoWkF1VDRod3J3cjZ4eWRGRHhRQWZ5b0ExQTFGckdSdkkxQ3d6d3dWOklwTTNqUkpKU2FvTjd0WDZBa1VHd3VwUzFnWWdQbW9JRUg3aW9jeEs3QkhHcVpBbFRtblJHNjVIZmpvRjVsS2M="
+MPESA_SHORT_CODE = "174379"
 MPESA_CALLBACK_URL = "https://example.com/"
-MPESA_API_URL='https://example.com/'
+MPESA_API_URL='https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
+
+MPESA_STKPUSH='https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest'
