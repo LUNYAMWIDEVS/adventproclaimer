@@ -27,9 +27,9 @@ SECRET_KEY = 'django-insecure-_@876m&g2$*55!90p5cvqfsb)_f07n#33vhp2^3ggabcx#zyjr
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['presenttruth.herokuapp.com','127.0.0.1','www.presenttruthers.com','presenttruthers.com','34.42.99.68','34.16.171.81',"34.125.149.128","0.0.0.0"]
+ALLOWED_HOSTS = ['presenttruth.herokuapp.com','127.0.0.1','www.presenttruthers.com','presenttruthers.com','34.42.99.68','34.16.171.81',"34.125.149.128","0.0.0.0","adventproclaimer.com"]
 
-CSRF_TRUSTED_ORIGINS = ["https://presenttruth.herokuapp.com",'http://34.42.99.68']
+CSRF_TRUSTED_ORIGINS = ["https://presenttruth.herokuapp.com",'http://34.42.99.68',"http://adventproclaimer.com/","https://adventproclaimer.com/"]
 
 # Application definition
 
@@ -229,11 +229,11 @@ CHANNEL_LAYERS = {
 PAYPAL_RECEIVER_EMAIL = "lunyamwi777@gmail.com"
 PAYPAL_TEST = True  # Set to False for production
 
-MPESA_CONSUMER_KEY = "H8tYcndchZAuT4hwrwr6xydFDxQAfyoA1A1FrGRvI1CwzwwV"
-MPESA_CONSUMER_SECRET= "IpM3jRJJSaoN7tX6AkUGwupS1gYgPmoIEH7iocxK7BHGqZAlTmnRG65HfjoF5lKc"
-MPESA_PASSKEY = "SDh0WWNuZGNoWkF1VDRod3J3cjZ4eWRGRHhRQWZ5b0ExQTFGckdSdkkxQ3d6d3dWOklwTTNqUkpKU2FvTjd0WDZBa1VHd3VwUzFnWWdQbW9JRUg3aW9jeEs3QkhHcVpBbFRtblJHNjVIZmpvRjVsS2M="
-MPESA_SHORT_CODE = "174379"
-MPESA_CALLBACK_URL = "https://example.com/"
-MPESA_API_URL='https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'
+MPESA_CONSUMER_KEY = os.getenv("MPESA_CONSUMER_KEY")
+MPESA_CONSUMER_SECRET= os.getenv("MPESA_CONSUMER_SECRET")
+MPESA_PASSKEY = os.getenv("MPESA_PASSKEY")
+MPESA_SHORT_CODE = os.getenv("MPESA_SHORT_CODE")
+MPESA_CALLBACK_URL = os.getenv("MPESA_CALLBACK_URL")
+MPESA_API_URL=os.getenv("MPESA_API_URL")
 
-MPESA_STKPUSH='https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest'
+MPESA_STKPUSH=os.getenv("MPESA_STKPUSH")
