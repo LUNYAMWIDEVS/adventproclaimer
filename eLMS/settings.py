@@ -29,7 +29,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['presenttruth.herokuapp.com','127.0.0.1','www.presenttruthers.com','presenttruthers.com','34.42.99.68','34.16.171.81',"34.125.149.128","0.0.0.0","adventproclaimer.com"]
 
-CSRF_TRUSTED_ORIGINS = ["https://presenttruth.herokuapp.com",'http://34.42.99.68',"http://adventproclaimer.com/","https://adventproclaimer.com/"]
+CSRF_TRUSTED_ORIGINS = ["https://adventproclaimer.com","https://presenttruth.herokuapp.com",'http://34.42.99.68',"http://adventproclaimer.com/","https://adventproclaimer.com/"]
 
 # Application definition
 
