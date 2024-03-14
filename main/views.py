@@ -38,6 +38,16 @@ def std_login(request):
 
     try:
         # If the user is already logged in, redirect to the course page
+        
+        redirect_to = request.POST.get('next', request.GET.get('next', None))
+        if redirect_to:
+            return HttpResponseRedirect(redirect_to)
+        
+        # Check if there's a stored URL in the session
+        next_url = request.session.get('next')
+        if next_url:
+            del request.session['next']  # Remove the stored URL from the session
+
         if request.session.get('student_id'):
             return redirect('/my/')
            
