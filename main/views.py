@@ -355,7 +355,7 @@ def assignmentPage(request, code, id):
             'assignment': assignment,
             'course': course,
             'submission': submission,
-            'time': datetime.datetime.now(),
+            'time': datetime.now(),
             'student': Student.objects.get(student_id=request.session['student_id']),
             'courses': Student.objects.get(student_id=request.session['student_id']).course.all()
         }
