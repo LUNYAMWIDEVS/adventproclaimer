@@ -2,6 +2,7 @@ import datetime
 import json
 import random
 import uuid
+from django.urls import reverse
 from django.shortcuts import redirect, render,get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -330,7 +331,7 @@ def assignmentPage(request, code, id):
                 'assignment': assignment,
                 'course': course,
                 'submission': submission,
-                'time': datetime.datetime.now(),
+                'time': datetime.now(),
                 'student': Student.objects.get(student_id=request.session['student_id']),
                 'courses': Student.objects.get(student_id=request.session['student_id']).course.all()
             }
@@ -351,7 +352,7 @@ def assignmentPage(request, code, id):
 
         return render(request, 'main/assignment-portal.html', context)
     else:
-
+        request.session['next'] = reverse('assignment_page', args=(code, id))
         return redirect('std_login')
 
 
