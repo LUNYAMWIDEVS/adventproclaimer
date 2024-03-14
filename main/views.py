@@ -362,7 +362,7 @@ def assignmentPage(request, code, id):
 
         return render(request, 'main/assignment-portal.html', context)
     else:
-        request.session['next'] = reverse('assignment_page', args=(code, id))
+        request.session['next'] = reverse('assignmentPage', args=(code, id))
         return redirect('std_login')
 
 
