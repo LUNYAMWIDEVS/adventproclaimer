@@ -43,10 +43,10 @@ def std_login(request):
         if redirect_to:
             return HttpResponseRedirect(redirect_to)
         
-        # Check if there's a stored URL in the session
-        next_url = request.session.get('next')
-        if next_url:
-            del request.session['next']  # Remove the stored URL from the session
+        # # Check if there's a stored URL in the session
+        # next_url = request.session.get('next')
+        # if next_url:
+        #     del request.session['next']  # Remove the stored URL from the session
 
         if request.session.get('student_id'):
             return redirect('/my/')
