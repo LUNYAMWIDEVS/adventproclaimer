@@ -16,15 +16,18 @@ class MpesaAccessToken:
     headers = {
         'Authorization': f'Basic {base64.b64encode(conc_token.encode()).decode("utf-8")}'
     }
-    try:
-        r = requests.get(MpesaC2bCredential.api_URL,
+    r = requests.get(MpesaC2bCredential.api_URL,
                         headers=headers)
+    try:
+        mpesa_access_token = json.loads(r.text.encode('utf-8'))
     except Exception as error:
         logging.warning(error)
 
-    mpesa_access_token = json.loads(r.text.encode('utf-8'))
-    validated_mpesa_access_token = mpesa_access_token['access_token']
-    
+    try:
+        validated_mpesa_access_token = mpesa_access_token['access_token']
+    except Exception as error:
+        logging.warning("Access token not found")
+        
 class LipanaMpesaPpassword:
     lipa_time = datetime.now().strftime('%Y%m%d%H%M%S')
     Business_short_code = settings.MPESA_SHORT_CODE
