@@ -10,5 +10,5 @@ urlpatterns = [
     path('startQuiz/<int:code>/<int:quiz_id>', views.startQuiz, name='startQuiz'),
     path('studentAnswer/<int:code>/<int:quiz_id>', views.studentAnswer, name='studentAnswer'),
     path('quizResult/<int:code>/<int:quiz_id>', views.quizResult, name='quizResult'),
-  
+    path('generateQuiz/',views.QuizGenerator.as_view())
 ]

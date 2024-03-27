@@ -13,9 +13,12 @@ from django.http import HttpResponseRedirect
 from .forms import AnnouncementForm, AssignmentForm, MaterialForm,SplitMaterialsForm,ScheduleMaterialForm
 from .helpers import upload_file,split_pdf
 from messenger.tasks.whatsapp_manager import send_batch_whatsapp_text
+from transformers import pipeline
 from datetime import timedelta, date, datetime, timezone
 from django_celery_beat.models import PeriodicTask, IntervalSchedule, CrontabSchedule
 from django.core.exceptions import ValidationError
+from rest_framework import views, response
+
 
 def is_student_authorised(request, code):
     # import pdb;pdb.set_trace()
@@ -863,3 +866,7 @@ def guestFaculty(request):
         return redirect('facultyCourses')
     except:
         return redirect('std_login')
+    
+
+
+
