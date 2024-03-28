@@ -9,6 +9,7 @@ from django.contrib import messages
 from .serializers import TextGenerationSerializer
 from rest_framework import views, response
 from transformers import pipeline
+from .tasks import start_pipeline
 
 def quiz(request, code):
     try:
@@ -277,17 +278,10 @@ class QuizGenerator(views.APIView):
             text = serializer.validated_data['text']
             prompt = f"Question: {text}\nAnswer:"
             
-            pipe = pipeline("text-generation", model="mistralai/Mixtral-8x7B-Instruct-v0.1")
-
-            result = pipe(prompt, num_return_sequences=3)
             
-            generated_answers = [item['generated_text'].split(':')[-1].strip() for item in result]
-
-            correct_answer = text  
-            generated_answers.append(correct_answer)
+            start_pipeline.delay(prompt)
             
-            random.shuffle(generated_answers)
 
-            return response.Response({'question': text, 'options': generated_answers})
+            return response.Response({'success':True})
         else:
             return response.Response(serializer.errors, status=400)
