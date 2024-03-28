@@ -1,11 +1,14 @@
 import datetime
+import random
 from django.shortcuts import render, redirect
 from .models import Quiz, Question, StudentAnswer
 from main.models import Student, Course, Faculty
 from datetime import timezone
 from main.views import is_faculty_authorised, is_student_authorised
 from django.contrib import messages
-
+from .serializers import TextGenerationSerializer
+from rest_framework import views, response
+from transformers import pipeline
 
 def quiz(request, code):
     try:
@@ -265,3 +268,26 @@ def quizSummary(request, code, quiz_id):
 
     else:
         return redirect('std_login')
+
+
+class QuizGenerator(views.APIView):
+    def post(self, request):
+        serializer = TextGenerationSerializer(data=request.data)
+        if serializer.is_valid():
+            text = serializer.validated_data['text']
+            prompt = f"Question: {text}\nAnswer:"
+            
+            pipe = pipeline("text-generation", model="mistralai/Mixtral-8x7B-Instruct-v0.1")
+
+            result = pipe(prompt, num_return_sequences=3)
+            
+            generated_answers = [item['generated_text'].split(':')[-1].strip() for item in result]
+
+            correct_answer = text  
+            generated_answers.append(correct_answer)
+            
+            random.shuffle(generated_answers)
+
+            return response.Response({'question': text, 'options': generated_answers})
+        else:
+            return response.Response(serializer.errors, status=400)
