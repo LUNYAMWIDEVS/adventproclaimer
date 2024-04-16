@@ -36,6 +36,7 @@ urlpatterns = [
     path('', include('attendance.urls')),
     path('', include('quiz.urls')),
     path('payment/',include('payment.urls')),
+    path('appointment/',include('appointment.urls')),
     path('needs/',include('needs.urls')),
     path('froala_editor/', include('froala_editor.urls')),
     re_path(r'paypal/', include('paypal.standard.ipn.urls')),
