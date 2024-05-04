@@ -33,39 +33,41 @@ def room(request, room_name):
 
 
 def paypalCheckOut(request, need_id):
-    if request.method == 'POST':
-        amount = request.POST.get('amount')
-        need = Need.objects.get(id=need_id)
+    amount = None
 
-        host = request.get_host()
+    # if request.method == 'POST':
+    amount = 10
+    need = Need.objects.get(id=need_id)
 
-        payment = Payment(
-            amount=amount,
-            type='C',
-        )
-        payment.save()
-        need.received_payments.add(payment)
-        need.save()
-        
-        paypal_checkout = {
-            'business': settings.PAYPAL_RECEIVER_EMAIL,
-            'amount': payment.amount,
-            'item_name': need.name,
-            'invoice': uuid.uuid4(),
-            'currency_code': 'USD',
-            'notify_url': f"http://{host}{reverse('paypal-ipn')}",
-            'return_url': f"http://{host}{reverse('payment-success', kwargs = {'need_id': need.id})}",
-            'cancel_url': f"http://{host}{reverse('payment-failed', kwargs = {'need_id': need.id})}",
-        }
+    host = request.get_host()
 
-        paypal_payment = PayPalPaymentsForm(initial=paypal_checkout)
+    payment = Payment(
+        amount=amount,
+        payment_types='C',
+    )
+    payment.save()
+    need.received_payments.add(payment)
+    need.save()
+    
+    paypal_checkout = {
+        'business': settings.PAYPAL_RECEIVER_EMAIL,
+        'amount': payment.amount,
+        'item_name': need.name,
+        'invoice': uuid.uuid4(),
+        'currency_code': 'USD',
+        'notify_url': f"http://{host}{reverse('paypal-ipn')}",
+        'return_url': f"http://{host}{reverse('payment-success', kwargs = {'need_id': need.id})}",
+        'cancel_url': f"http://{host}{reverse('payment-failed', kwargs = {'need_id': need.id})}",
+    }
 
-        context = {
-            'need': need,
-            'paypal': paypal_payment
-        }
+    paypal_payment = PayPalPaymentsForm(initial=paypal_checkout)
 
-        return render(request, 'payment/paypal_checkout.html', context)
+    context = {
+        'need': need,
+        'paypal': paypal_payment
+    }
+
+    return render(request, 'payment/paypal_checkout.html', context)
 
 
 def paypalPaymentSuccessful(request, need_id):
@@ -96,7 +98,8 @@ def mpesa_payment_api_view(request):
         payment = Payment(
             amount=amount,
             phone_number=payer_mobile_no,
-            business_short_code=settings.MPESA_SHORT_CODE
+            business_short_code=settings.MPESA_SHORT_CODE,
+            payment_types='M'
         )
 
         payment.save()

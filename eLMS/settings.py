@@ -233,6 +233,7 @@ CHANNEL_LAYERS = {
 }
 
 PAYPAL_RECEIVER_EMAIL = "lunyamwi777@gmail.com"
+PAYPAL_BUY_BUTTON_IMAGE = "https://res.cloudinary.com/djqomicoa/image/upload/v1714855978/donation_button_jvxjjv.jpg"
 PAYPAL_TEST = True  # Set to False for production
 
 MPESA_CONSUMER_KEY = os.getenv("MPESA_CONSUMER_KEY")
