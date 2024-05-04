@@ -10,6 +10,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from django.conf import settings
 from django.shortcuts import get_object_or_404
+from celery import shared_task
 from .models import Assignment,Material
 from datetime import timedelta, date
 from .prompt import enrich_format_message
@@ -208,6 +209,8 @@ def download_file(file_id, local_fd):
       print ('Download Complete')
       return
 
+
+@shared_task
 def split_pdf(file_id,steps):
     material = get_object_or_404(Material,file=file_id)
     file_path = 'media/downloads/downloaded.pdf'

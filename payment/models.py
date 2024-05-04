@@ -10,12 +10,23 @@ class Payment(models.Model):
         ('P', 'Pending'),
         ('C', 'Cancelled')
     ]
-    phone_number = models.CharField(db_index=True, max_length=15)
-    amount = models.DecimalField(max_digits=20, decimal_places=2)
+    TYPE = [
+        ('M', 'Mpesa'),
+        ('C', 'Credit Card')
+    ]
+    phone_number = models.CharField(db_index=True, max_length=15,null=True,blank=True)
+    amount = models.DecimalField(max_digits=20, decimal_places=2,null=True,blank=True)
     status = models.CharField(
         max_length=1,
         choices=STATUS,
         default='P',
+        null=True,blank=True
+    )
+    payment_types = models.CharField(
+        max_length=1,
+        choices=TYPE,
+        default='M',
+        null=True,blank=True
     )
     # transaction_id = models.CharField(max_length=20, unique=True)
     business_short_code = models.CharField(

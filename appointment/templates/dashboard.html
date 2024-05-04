@@ -1,0 +1,11 @@
+
+{% block content %}
+  <h1>Zoom-YouTube Dashboard</h1>
+    <p>Welcome, {{ user.username }}!</p>
+    <p><a href="{% url 'create_zoom_meeting' %}">Create Zoom Meeting</a></p>
+    {% if "meeting_id" in request.session %}
+        <p>Zoom Meeting ID: {{ request.session.meeting_id }}</p>
+        <p><a href="{% url 'upload_to_youtube' request.session.meeting_id %}">Upload to YouTube</a></p>
+    {% endif %}
+    
+{% endblock %}

@@ -32,14 +32,22 @@ def room(request, room_name):
 
 
 def paypalCheckOut(request, need_id):
-
+    amount = request.post.get('amount')
     need = Need.objects.get(id=need_id)
 
     host = request.get_host()
 
+    payment = Payment(
+        amount=amount,
+        type='C',
+    )
+    payment.save()
+    need.received_payments.add(payment)
+    need.save()
+    
     paypal_checkout = {
         'business': settings.PAYPAL_RECEIVER_EMAIL,
-        'amount': need.price,
+        'amount': payment.amount,
         'item_name': need.name,
         'invoice': uuid.uuid4(),
         'currency_code': 'USD',
@@ -78,12 +86,12 @@ class mpesaPaymentAPIView(generics.GenericAPIView):
     """Handle Mpesa Payment"""
     serializer_class = PaymentSentSerializer
     renderer_classes = (RequestJSONRenderer, )
-    # permission_classes = (IsAuthenticated,)
-
+    
     def post(self, request):
         data = request.data
         payer_mobile_no = data.get('mobile_no', '')
         amount = data.get('amount', '')
+        need_id = data.get('need_id')
 
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
@@ -92,15 +100,16 @@ class mpesaPaymentAPIView(generics.GenericAPIView):
             phone_number=payer_mobile_no,
             business_short_code=settings.MPESA_SHORT_CODE
         )
+
+
         payment.save()
-        # res = {'Body':
-        #        {'stkCallback':
-        #         {'MerchantRequestID': '16943-13510039-1', 'CheckoutRequestID': 'ws_CO_290320202133063355',
-        #          'ResultCode': 0, 'ResultDesc': 'The service request is processed successfully.',
-        #          'CallbackMetadata': {
-        #              'Item': [{'Name': 'Amount', 'Value': 1.0}, {'Name': 'MpesaReceiptNumber', 'Value': 'OCT04JUGLU'}, {'Name': 'Balance'}, {'Name': 'TransactionDate', 'Value': 20200329213312}, {'Name': 'PhoneNumber', 'Value': 254727737299}]}}}}
-        # import pdb
-        # pdb.set_trace()
+        needs = Need.objects.filter(id=need_id)
+        if needs.exists():
+            need = needs.last()
+            need.received_payments.add(payment)
+            need.save()
+
+        
         perform_transaction.delay(payer_mobile_no, amount, payment.id)
         return Response({"message": "Request accepted for processing"}, status=status.HTTP_201_CREATED)
 

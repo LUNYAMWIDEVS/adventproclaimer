@@ -16,8 +16,12 @@ class MpesaAccessToken:
     headers = {
         'Authorization': f'Basic {base64.b64encode(conc_token.encode()).decode("utf-8")}'
     }
-    r = requests.get(MpesaC2bCredential.api_URL,
-                        headers=headers)
+    try:
+        r = requests.get(MpesaC2bCredential.api_URL,
+                            headers=headers)
+    except Exception as error:
+        logging.warning(error)
+        
     try:
         mpesa_access_token = json.loads(r.text.encode('utf-8'))
     except Exception as error:

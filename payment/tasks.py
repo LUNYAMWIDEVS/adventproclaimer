@@ -43,7 +43,31 @@ def perform_transaction(payer_mobile_no, amount, payment_id):
         "PartyB": LipanaMpesaPpassword.Business_short_code,
         "PhoneNumber": payer_mobile_no.split('+')[::-1][0],
         "CallBackURL": f"{settings.MPESA_CALLBACK_URL}/{payment_id}/",
-        "AccountReference": "Covid Aid",
-        "TransactionDesc": "Covid Aid"
+        "AccountReference": "Fund Test",
+        "TransactionDesc": "Fund Test"
+    }
+    requests.post(api_url, json=request, headers=headers)
+
+
+def perform_transaction_test(payer_mobile_no, amount, payment_id):
+    """
+    Perform Lipa na mpesa transaction
+    """
+    access_token = MpesaAccessToken.validated_mpesa_access_token
+    api_url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
+    print(api_url)
+    headers = {"Authorization": "Bearer %s" % access_token}
+    request = {
+        "BusinessShortCode": LipanaMpesaPpassword.Business_short_code,
+        "Password": LipanaMpesaPpassword.decode_password,
+        "Timestamp": LipanaMpesaPpassword.lipa_time,
+        "TransactionType": "CustomerPayBillOnline",
+        "Amount": amount,
+        "PartyA": payer_mobile_no.split('+')[::-1][0],
+        "PartyB": LipanaMpesaPpassword.Business_short_code,
+        "PhoneNumber": payer_mobile_no.split('+')[::-1][0],
+        "CallBackURL": f"{settings.MPESA_CALLBACK_URL}/{payment_id}/",
+        "AccountReference": "Fund Test",
+        "TransactionDesc": "Fund Test"
     }
     requests.post(api_url, json=request, headers=headers)

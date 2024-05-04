@@ -531,7 +531,7 @@ def splitCourseMaterial(request, code,id):
             form = SplitMaterialsForm(request.POST or None)
             if form.is_valid():
                 material = get_object_or_404(Material,id=id)
-                split_pdf(file_id=material.file,steps=int(request.POST.get('no_pages'))) 
+                split_pdf.delay(file_id=material.file,steps=int(request.POST.get('no_pages'))) 
                 messages.success(request, 'Material Successfully split')
                 return redirect('/faculty/' + str(code))
             else:

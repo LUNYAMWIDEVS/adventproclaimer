@@ -1,40 +1,51 @@
 # Create your views here.
 import requests
 import os
+import io
 from django.shortcuts import render
 from django.http import JsonResponse
 from .helpers.zoom_token import get_zoom_token
+import os
+import google.auth
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaFileUpload
+from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaIoBaseUpload
+import requests
+import json
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.contrib.auth.decorators import login_required
+from .tasks import upload_zoom_recording_to_youtube_task, create_zoom_meeting_task
 
+zoom_api_url = "https://api.zoom.us/v2"
+headers = {"authorization": f"Bearer {get_zoom_token(lasting_time=120)}", "content-type": "application/json"}
+
+# Set up the OAuth 2.0 client for the Google API
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
+scopes = ["https://www.googleapis.com/auth/youtube.force-ssl"]
+client_secret_file = os.path.join(os.path.dirname(__file__), "client_secret.json")
+
+
+# @login_required
 def create_zoom_meeting(request):
-    # Zoom API endpoint for creating a meeting
-    zoom_api_url = "https://api.zoom.us/v2/users/me/meetings"
+    topic = "Test Meeting"
+    start_time = "2023-03-01T12:00:00"  # YYYY-MM-DDTHH:MM:SS
+    duration = 60  # In minutes
+    task_result = create_zoom_meeting_task.delay(topic, start_time, duration)
 
-    # Zoom API token (replace 'YOUR_ZOOM_API_TOKEN' with your actual token)
-    zoom_api_token = get_zoom_token(lasting_time=120)
 
-    # Request headers including the API token
-    headers = {
-        'Authorization': f'Bearer {zoom_api_token}',
-        'Content-Type': 'application/json'
-    }
+    # Redirect the user to the dashboard
+    return render(request, template_name="dashboard.html")
 
-    # Request body with meeting details
-    meeting_data = {
-        'topic': 'My Zoom Meeting',
-        'type': 1,  # 1 for instant meeting, 2 for scheduled meeting
-        'start_time': '2024-04-03T12:00:00',  # Adjust start time as needed
-        'duration': 60,  # Meeting duration in minutes
-    }
 
-    # Make a POST request to create the meeting
-    response = requests.post(zoom_api_url, json=meeting_data, headers=headers)
+# @login_required
+def upload_to_youtube(request, meeting_id):
+    # Download the Zoom meeting recording from the Zoom API
+    task_result = upload_zoom_recording_to_youtube_task.delay(meeting_id)
 
-    # Check if the request was successful
-    if response.status_code == 201:  # 201 indicates the meeting was created successfully
-        # Extract the meeting data from the response
-        # Return meeting details as JSON response
-        return JsonResponse({"success":True})
-    else:
-        # If the request failed, return error message
-        error_message = {"error": "Failed to create Zoom meeting"}
-        return JsonResponse(error_message, status=response.status_code)
+
+    # Redirect the user to the dashboard
+    return render(request, template_name="dashboard.html")

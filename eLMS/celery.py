@@ -8,7 +8,9 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "eLMS.settings")
 
 CELERY_TASKS = [
     'messenger.tasks.email_manager',
-    'messenger.tasks.whatsapp_manager'
+    'messenger.tasks.whatsapp_manager',
+    'main.helpers',
+    'appointment.tasks',
 ]
 
 app = Celery("eLMS",include=CELERY_TASKS)
