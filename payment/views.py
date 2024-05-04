@@ -8,6 +8,7 @@ import json
 from django.conf import settings
 from rest_framework import mixins, generics
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework import status
 # from mpesa_api.core.mpesa import Mpesa
@@ -32,38 +33,39 @@ def room(request, room_name):
 
 
 def paypalCheckOut(request, need_id):
-    amount = request.post.get('amount')
-    need = Need.objects.get(id=need_id)
+    if request.method == 'POST':
+        amount = request.POST.get('amount')
+        need = Need.objects.get(id=need_id)
 
-    host = request.get_host()
+        host = request.get_host()
 
-    payment = Payment(
-        amount=amount,
-        type='C',
-    )
-    payment.save()
-    need.received_payments.add(payment)
-    need.save()
-    
-    paypal_checkout = {
-        'business': settings.PAYPAL_RECEIVER_EMAIL,
-        'amount': payment.amount,
-        'item_name': need.name,
-        'invoice': uuid.uuid4(),
-        'currency_code': 'USD',
-        'notify_url': f"http://{host}{reverse('paypal-ipn')}",
-        'return_url': f"http://{host}{reverse('payment-success', kwargs = {'need_id': need.id})}",
-        'cancel_url': f"http://{host}{reverse('payment-failed', kwargs = {'need_id': need.id})}",
-    }
+        payment = Payment(
+            amount=amount,
+            type='C',
+        )
+        payment.save()
+        need.received_payments.add(payment)
+        need.save()
+        
+        paypal_checkout = {
+            'business': settings.PAYPAL_RECEIVER_EMAIL,
+            'amount': payment.amount,
+            'item_name': need.name,
+            'invoice': uuid.uuid4(),
+            'currency_code': 'USD',
+            'notify_url': f"http://{host}{reverse('paypal-ipn')}",
+            'return_url': f"http://{host}{reverse('payment-success', kwargs = {'need_id': need.id})}",
+            'cancel_url': f"http://{host}{reverse('payment-failed', kwargs = {'need_id': need.id})}",
+        }
 
-    paypal_payment = PayPalPaymentsForm(initial=paypal_checkout)
+        paypal_payment = PayPalPaymentsForm(initial=paypal_checkout)
 
-    context = {
-        'need': need,
-        'paypal': paypal_payment
-    }
+        context = {
+            'need': need,
+            'paypal': paypal_payment
+        }
 
-    return render(request, 'payment/paypal_checkout.html', context)
+        return render(request, 'payment/paypal_checkout.html', context)
 
 
 def paypalPaymentSuccessful(request, need_id):
@@ -81,6 +83,31 @@ def paypalpaymentFailed(request, need_id):
 
 
 
+def mpesa_payment_api_view(request):
+    """Handle Mpesa Payment"""
+    if request.method == 'POST':
+        # data = JSONParser().parse(request)
+        payer_mobile_no = request.POST.get('mobile_no', '')
+        amount = request.POST.get('amount', '')
+        need_id = request.POST.get('need_id')
+
+        # serializer = PaymentSentSerializer(data=data)
+        # serializer.is_valid(raise_exception=True)
+        payment = Payment(
+            amount=amount,
+            phone_number=payer_mobile_no,
+            business_short_code=settings.MPESA_SHORT_CODE
+        )
+
+        payment.save()
+        needs = Need.objects.filter(id=need_id)
+        if needs.exists():
+            need = needs.last()
+            need.received_payments.add(payment)
+            need.save()
+
+        perform_transaction(payer_mobile_no, amount, payment.id)
+    return render(request, 'payment/mpesa.html')
 
 class mpesaPaymentAPIView(generics.GenericAPIView):
     """Handle Mpesa Payment"""
