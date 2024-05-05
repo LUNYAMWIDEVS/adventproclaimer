@@ -1,12 +1,24 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout page</title>
+   
+    <hr/>
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/icon/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/icon/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/icon/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'images/icon/site.webmanifest' %}">
+    <link rel="stylesheet" href="{% static 'styles/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/style.css' %}">
+    <link rel="stylesheet" href="{% static 'styles/style-login.css' %}">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
+    <div class="container">
+    <title>Donation page</title>
 </head>
 <body>
-    <h1>Checkout for need: {{need.name}}</h1>
+    <h1>Donation for need: {{need.name}}</h1>
     <div class="need-container">
         <div class="needs">
             <img class="img" src="{{need.image}}" alt="">

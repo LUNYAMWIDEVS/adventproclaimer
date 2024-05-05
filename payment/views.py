@@ -85,13 +85,14 @@ def paypalpaymentFailed(request, need_id):
 
 
 
-def mpesa_payment_api_view(request):
+def mpesa_payment_api_view(request,need_id):
     """Handle Mpesa Payment"""
+    context = {"need_id":need_id}
     if request.method == 'POST':
         # data = JSONParser().parse(request)
         payer_mobile_no = request.POST.get('mobile_no', '')
         amount = request.POST.get('amount', '')
-        need_id = request.POST.get('need_id')
+        
 
         # serializer = PaymentSentSerializer(data=data)
         # serializer.is_valid(raise_exception=True)
@@ -109,8 +110,8 @@ def mpesa_payment_api_view(request):
             need.received_payments.add(payment)
             need.save()
 
-        perform_transaction(payer_mobile_no, amount, payment.id)
-    return render(request, 'payment/mpesa.html')
+        perform_transaction.delay(payer_mobile_no, amount, payment.id)
+    return render(request, 'payment/mpesa.html',context)
 
 class mpesaPaymentAPIView(generics.GenericAPIView):
     """Handle Mpesa Payment"""
