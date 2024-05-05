@@ -13,6 +13,7 @@ from django.http import HttpResponseRedirect
 from .forms import AnnouncementForm, AssignmentForm, MaterialForm,SplitMaterialsForm,ScheduleMaterialForm
 from .helpers import upload_file,split_pdf
 from messenger.tasks.whatsapp_manager import send_batch_whatsapp_text
+from messenger.tasks.whatsapp_manager_v2 import send_batch_whatsapp_text_with_template
 from datetime import timedelta, date, datetime, timezone
 from django_celery_beat.models import PeriodicTask, IntervalSchedule, CrontabSchedule
 from django.core.exceptions import ValidationError
@@ -582,13 +583,31 @@ def scheduleCourseMaterial(request, code, id):
                         # print(request.POST.get('course_format'))
                         
                         if request.POST.get('course_format') == 'W':
-                            # import pdb;pdb.set_trace()
-                            PeriodicTask.objects.update_or_create(
-                                crontab=schedule,                  # we created this above.
-                                name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
-                                task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text',  # name of task.
-                                args=json.dumps([[student.phone_number], [student.name], assignment.description]),
-                            )
+                            # need to schedule messages for each whastapp msg chunk
+                            messages = assignment.break_desc_into_whatsapp_msg_chunks()
+                            if len(messages) > 0:
+                                for msg_index, msg in enumerate(messages):
+                                    
+                                    schedule, _ = CrontabSchedule.objects.get_or_create(
+                                        minute=f'{random_minutes}',
+                                        hour=f'{random_hour}',
+                                        day_of_week=f'*',
+                                        day_of_month=f'{relative_date.day}',
+                                        month_of_year=f'{relative_date.month}'
+                                    )
+                                     
+                                    progress = ':' if index == 0 else 'continued'
+                                    
+                                    #need to fix this to schedule to send after an hour
+                                    PeriodicTask.objects.update_or_create(
+                                        crontab=schedule,  # we need a more random time.
+                                        name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}--{msg_index}',          # simply describes this periodic task.
+                                        # task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text',  # name of task.
+                                        task= 'messenger.tasks.whatsapp_manager_v2.send_batch_whatsapp_text_with_template',
+                                        # args=json.dumps([[student.phone_number], [student.name], assignment.description]),
+                                        args=json.dumps([[student.phone_number], [student.name],progress, msg]),
+                                    )
+                                    
                         if request.POST.get('course_format') == 'E':
                             PeriodicTask.objects.update_or_create(
                                 crontab=schedule,                  # we created this above.
