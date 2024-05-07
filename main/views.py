@@ -13,7 +13,7 @@ from django.http import HttpResponseRedirect
 from .forms import AnnouncementForm, AssignmentForm, MaterialForm,SplitMaterialsForm,ScheduleMaterialForm
 from .helpers import upload_file,split_pdf
 from messenger.tasks.whatsapp_manager import send_batch_whatsapp_text
-from messenger.tasks.whatsapp_manager_v2 import send_batch_whatsapp_text_with_template
+from messenger.tasks.whatsapp_manager_with_templates import send_batch_whatsapp_text_with_template
 from datetime import timedelta, date, datetime, timezone
 from django_celery_beat.models import PeriodicTask, IntervalSchedule, CrontabSchedule
 from django.core.exceptions import ValidationError
@@ -584,13 +584,13 @@ def scheduleCourseMaterial(request, code, id):
                         
                         if request.POST.get('course_format') == 'W':
                             # need to schedule messages for each whastapp msg chunk
-                            messages = assignment.break_desc_into_whatsapp_msg_chunks()
-                            if len(messages) > 0:
-                                for msg_index, msg in enumerate(messages):
-                                    
+                            smses = assignment.break_desc_into_whatsapp_msg_chunks()
+                            if len(smses) > 0:
+                                for msg_index, msg in enumerate(smses):
+                                    new_hour = (msg_index + 1) % 24
                                     schedule, _ = CrontabSchedule.objects.get_or_create(
                                         minute=f'{random_minutes}',
-                                        hour=f'{random_hour}',
+                                        hour=f'{new_hour}',
                                         day_of_week=f'*',
                                         day_of_month=f'{relative_date.day}',
                                         month_of_year=f'{relative_date.month}'
@@ -601,10 +601,8 @@ def scheduleCourseMaterial(request, code, id):
                                     #need to fix this to schedule to send after an hour
                                     PeriodicTask.objects.update_or_create(
                                         crontab=schedule,  # we need a more random time.
-                                        name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}--{msg_index}',          # simply describes this periodic task.
-                                        # task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text',  # name of task.
-                                        task= 'messenger.tasks.whatsapp_manager_v2.send_batch_whatsapp_text_with_template',
-                                        # args=json.dumps([[student.phone_number], [student.name], assignment.description]),
+                                        name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}--{msg_index}',
+                                        task= 'messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',
                                         args=json.dumps([[student.phone_number], [student.name],progress, msg]),
                                     )
                                     
@@ -633,6 +631,11 @@ def scheduleCourseMaterial(request, code, id):
             return render(request, 'main/schedule-material.html', {'course': Course.objects.get(code=code), 'faculty': Faculty.objects.get(faculty_id=request.session['faculty_id']), 'form': form})
     else:
         return redirect('std_login')
+
+def random_time():
+    start_time = datetime.now()
+    end_time = start_time + timedelta(hours=8)
+    return start_time + timedelta(seconds=random.randint(0, int((end_time - start_time).total_seconds())))
 
 def deleteCourseMaterial(request, code, id):
     if is_faculty_authorised(request, code):
