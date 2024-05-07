@@ -4,7 +4,6 @@ from requests.exceptions import ConnectionError, Timeout, TooManyRedirects
 from time import sleep
 from celery import shared_task
 import os
-from django.template import loader
 
 BASE_URL = os.getenv('BASE_URL').strip()
 API_VERSION = os.getenv('API_VERSION').strip()
@@ -18,7 +17,33 @@ def cut_string_to_max_length(input_string, max_length=912):
         return input_string[:max_length]
     return input_string
 
-# @shared_task
+@shared_task
+def send_batch_whatsapp_text_with_template(numbers,names,progress,paragraphs):
+    # message = ' '.join(message.split())
+    for i,number in enumerate(numbers):
+        
+        headers = {
+            "Authorization": f"Bearer {API_TOKEN}",
+            "Content-Type": "application/json"
+        }
+        parameters = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": number,
+            "type": "template",
+            "template": select_whatsapp_template(names[i],progress,paragraphs)
+
+        }
+        session = Session()
+        session.headers.update(headers)
+        try:
+            response = session.post(URL, json=parameters)
+            data = json.loads(response.text)
+            print(f"data: {data}")
+        except (ConnectionError, Timeout, TooManyRedirects) as e:
+            print(e)
+
+
 def send_batch_whatsapp_text(numbers,names,message):
     message = ' '.join(message.split())
     for i,number in enumerate(numbers):
@@ -60,33 +85,6 @@ def send_batch_whatsapp_text(numbers,names,message):
             print(f"data: {data}")
         except (ConnectionError, Timeout, TooManyRedirects) as e:
             print(e)
-
-
-def send_batch_whatsapp_text_with_template(numbers,names,progress,paragraphs):
-    # message = ' '.join(message.split())
-    for i,number in enumerate(numbers):
-        
-        headers = {
-            "Authorization": f"Bearer {API_TOKEN}",
-            "Content-Type": "application/json"
-        }
-        parameters = {
-            "messaging_product": "whatsapp",
-            "recipient_type": "individual",
-            "to": number,
-            "type": "template",
-            "template": select_whatsapp_template(names[i],progress,paragraphs)
-
-        }
-        session = Session()
-        session.headers.update(headers)
-        try:
-            response = session.post(URL, json=parameters)
-            data = json.loads(response.text)
-            print(f"data: {data}")
-        except (ConnectionError, Timeout, TooManyRedirects) as e:
-            print(e)
-
 
 
 
