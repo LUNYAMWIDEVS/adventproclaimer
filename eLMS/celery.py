@@ -9,6 +9,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "eLMS.settings")
 CELERY_TASKS = [
     'messenger.tasks.email_manager',
     'messenger.tasks.whatsapp_manager',
+    'messenger.tasks.phone_call_manager',
     'main.helpers',
     'appointment.tasks',
 ]

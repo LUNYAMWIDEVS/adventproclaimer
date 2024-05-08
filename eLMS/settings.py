@@ -28,13 +28,16 @@ SECRET_KEY = 'django-insecure-_@876m&g2$*55!90p5cvqfsb)_f07n#33vhp2^3ggabcx#zyjr
 DEBUG = True
 
 ALLOWED_HOSTS = ['presenttruth.herokuapp.com','127.0.0.1','www.presenttruthers.com','presenttruthers.com','34.42.99.68','34.16.171.81',
-                 "34.125.149.128","0.0.0.0","adventproclaimer.com","34.16.208.222"]
+                 "34.125.149.128","0.0.0.0","adventproclaimer.com","34.16.208.222",
+                 "e8fd-197-180-95-83.ngrok-free.app","dc22-2c0f-2a80-10d0-8d10-b55d-a7e-d40e-2e5a.ngrok-free.app"]
 
 CSRF_TRUSTED_ORIGINS = ["https://adventproclaimer.com","https://presenttruth.herokuapp.com",'http://34.42.99.68',
                         "http://34.16.208.222/",
                         "https://34.16.208.222",
                         "http://adventproclaimer.com/",
-                        "https://adventproclaimer.com/"]
+                        "https://adventproclaimer.com/",
+                        "https://e8fd-197-180-95-83.ngrok-free.app",
+                        "https://dc22-2c0f-2a80-10d0-8d10-b55d-a7e-d40e-2e5a.ngrok-free.app"]
 
 # Application definition
 
