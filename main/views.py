@@ -18,7 +18,21 @@ from datetime import timedelta, date, datetime, timezone
 from django_celery_beat.models import PeriodicTask, IntervalSchedule, CrontabSchedule
 from django.core.exceptions import ValidationError
 from rest_framework import views, response
+from rest_framework.views import APIView
+from rest_framework.response import Response
+import os
+import openai
+from openai import OpenAI
+from langchain.text_splitter import RecursiveCharacterTextSplitter, SentenceTransformersTokenTextSplitter
+import chromadb
+from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 
+
+from dotenv import load_dotenv, find_dotenv
+_ = load_dotenv(find_dotenv()) # read local .env file
+openai.api_key = os.environ['OPENAI_API_KEY']
+
+openai_client = OpenAI()
 
 def is_student_authorised(request, code):
     # import pdb;pdb.set_trace()
@@ -868,5 +882,64 @@ def guestFaculty(request):
         return redirect('std_login')
     
 
+def rag(query, retrieved_documents, model="gpt-3.5-turbo"):
+    information = "\n\n".join(retrieved_documents)
+
+    messages = [
+        {
+            "role": "system",
+            "content": "You are a helpful expert in Bible and Spirit of Prophecy matters. Your users are asking questions about information contained in the Bible and Spirit of Prophecy."
+            "You will be shown the user's question, and the relevant information from the Bible and Spirit of Prophecy. Answer the user's question using only this information."
+        },
+        {"role": "user", "content": f"Question: {query}. \n Information: {information}"}
+    ]
+    
+    response = openai_client.chat.completions.create(
+        model=model,
+        messages=messages,
+    )
+    content = response.choices[0].message.content
+    return content
 
 
+
+class AskQuestionsView(APIView):
+
+    def post(self, request):
+
+        # Extract the PDF texts from the request
+        assignments = Assignment.objects.all()
+        pdf_texts = []
+        for assignment in assignments:
+            if assignment.description:
+                pdf_texts.append(assignment.description)
+        # Split the text into chunks using character and token splitters
+        character_splitter = RecursiveCharacterTextSplitter(
+            separators=["\n\n", "\n", ". ", " ", ""],
+            chunk_size=1000,
+            chunk_overlap=0
+        )
+        character_split_texts = character_splitter.split_text('\n\n'.join(pdf_texts))
+        token_splitter = SentenceTransformersTokenTextSplitter(chunk_overlap=0, tokens_per_chunk=256)
+
+        token_split_texts = []
+        for text in character_split_texts:
+            token_split_texts += token_splitter.split_text(text)
+
+        # Create a ChromaDB collection and add the text chunks to it
+        embedding_function = SentenceTransformerEmbeddingFunction()
+        chroma_client = chromadb.Client()
+        chroma_collection = chroma_client.create_collection("answerhub", embedding_function=embedding_function)
+
+        ids = [str(i) for i in range(len(token_split_texts))]
+        chroma_collection.add(ids=ids, documents=token_split_texts)
+        chroma_collection.count()
+
+        # Query the ChromaDB collection with the user's question and retrieve the relevant documents
+        query = request.data.get("question")
+        results = chroma_collection.query(query_texts=[query], n_results=5)
+        retrieved_documents = results['documents'][0]
+
+        # Generate the answer using the RAG model and return it as a JSON response
+        output = rag(query=query, retrieved_documents=retrieved_documents)
+        return Response({"question":query,"answer": output})
