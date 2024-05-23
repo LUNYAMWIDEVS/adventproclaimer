@@ -23,6 +23,7 @@ SCOPES = {
 }
 DISCOVERY_DOC = 'https://docs.googleapis.com/$discovery/rest?version=v1'
 
+
 def generate_credentials_json():
     creds = {
         "installed": {

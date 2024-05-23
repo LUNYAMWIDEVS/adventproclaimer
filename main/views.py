@@ -930,7 +930,7 @@ class AskQuestionsView(APIView):
         embedding_function = SentenceTransformerEmbeddingFunction()
         chroma_client = chromadb.Client()
         chroma_collection = chroma_client.create_collection("answerhub", embedding_function=embedding_function)
-
+        # chroma_collection = chroma_client.get_collection(name="answerhub")
         ids = [str(i) for i in range(len(token_split_texts))]
         chroma_collection.add(ids=ids, documents=token_split_texts)
         chroma_collection.count()

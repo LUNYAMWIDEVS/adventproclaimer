@@ -8,7 +8,7 @@ def get_zoom_token(lasting_time):
 
     payload = {
         'iss': api_key,
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=lasting_time)  # Token expiration time
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1)  # Token expiration time
     }
 
     token = jwt.encode(payload, api_secret, algorithm='HS256')
