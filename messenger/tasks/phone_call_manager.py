@@ -29,10 +29,19 @@ def make_phone_call(to_number,message):
 @shared_task
 def send_voice_over_call(to_number,file_name_prefix):
     # Get the media folder path
+    # data = {
+    #     'authCode': 'YOUR_USER_CODE',
+    #     'articleText': 'Habari yako',
+    #     'configVoice': 'Rafiki',
+    #     'configLang': 'sw-KE',
+    #     'configPitch': '1.0',
+    #     'configSpeed': '1.0'
+    # }
+    # response = requests.post('https://api.voiser.net/v2/limitless/', json = data)
+    # print(response.json())
+    url = "https://api.voicer.io/api/v1/tts"
     media_root = os.environ.get('DJANGO_SETTINGS_MODULE')
     media_folder = os.path.join(os.path.dirname(media_root), 'media')
-
-    url = "https://api.voicer.io/api/v1/tts"
 
     headers = {
         'Authorization': 'Bearer YOUR_API_KEY',
