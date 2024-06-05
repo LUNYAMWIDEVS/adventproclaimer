@@ -606,7 +606,7 @@ def scheduleCourseMaterial(request, code, id):
                             question.option4 = option.get('option4')
                             question.answer = option.get('answer')
                         question.save()
-                        
+
                     schedule = None
                     relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1)
                     random_minutes = random.randint(1,2)
@@ -641,12 +641,24 @@ def scheduleCourseMaterial(request, code, id):
                                 task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text',  # name of task.
                                 args=json.dumps([[student.phone_number], [student.name], assignment.description]),
                             )
+                            PeriodicTask.objects.update_or_create(
+                                crontab=schedule,                  # we created this above.
+                                name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
+                                task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text',  # name of task.
+                                args=json.dumps([[student.phone_number], [student.name], f"{request.host()}/quiz/{assignment.course_code.code}"]),
+                            )
                         if request.POST.get('course_format') == 'E':
                             PeriodicTask.objects.update_or_create(
                                 crontab=schedule,                  # we created this above.
                                 name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
                                 task='messenger.tasks.email_manager.send_newsletter',  # name of task.
                                 args=json.dumps([student.name, student.email,assignment.description]),
+                            )
+                            PeriodicTask.objects.update_or_create(
+                                crontab=schedule,                  # we created this above.
+                                name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
+                                task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text',  # name of task.
+                                args=json.dumps([[student.phone_number], [student.name], f"{request.host()}/quiz/{assignment.course_code.code}"]),
                             )
                         
                     except ValidationError as err:
