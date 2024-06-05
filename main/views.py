@@ -26,7 +26,7 @@ from openai import OpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter, SentenceTransformersTokenTextSplitter
 import chromadb
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
-
+from quiz.models import Question,Quiz
 
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv()) # read local .env file
@@ -569,10 +569,44 @@ def scheduleCourseMaterial(request, code, id):
                 material = get_object_or_404(Material,id=id)
                 assigments =material.assignments.all()
                 student = Student.objects.get(student_id=request.POST.get('user'))
+                
                 morning_flag = True
                 for index,assignment in enumerate(assigments):
                     # TODO: order the assignments
                     # TODO: ensure the loop is not one assignment per day
+                    messages = [
+                        {
+                            "role": "system",
+                            "content": "You are a helpful expert in Bible and Spirit of Prophecy matters. Your aim is to ask questions,give title also based on the"
+                            f"information: {assignment.description}, return a json with 5 questions and 4 options and the answer in the format"
+                            "{'title':'title','questions':[{'question1':['option1','option2'],'answer':'answer'},{'question2':['option1','option2'],'answer':'answer'}]}"
+                        },
+                        {"role": "user", "content": f"Question: {query}. \n Information: {information}"}
+                    ]
+                    
+                    response = openai_client.chat.completions.create(
+                        model=model,
+                        messages=messages,
+                    )
+                    content = response.choices[0].message.content
+                    quiz = Quiz()
+                    quiz.assignment = assignment
+                    quiz.course = assignment.course_code
+                    quiz.title = content.get('title')
+                    quiz.save()
+
+                    for question_ in content.get('questions'):
+                        question = Question()
+                        question.quiz = quiz
+                        question.question = question_.get(f'question{i}')
+                        for option in question_.get(f'question{i}'):
+                            question.option1 = option.get('option1')
+                            question.option2 = option.get('option2')
+                            question.option3 = option.get('option3')
+                            question.option4 = option.get('option4')
+                            question.answer = option.get('answer')
+                        question.save()
+                        
                     schedule = None
                     relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1)
                     random_minutes = random.randint(1,2)
@@ -593,6 +627,7 @@ def scheduleCourseMaterial(request, code, id):
                         day_of_month=f'{relative_date.day}',
                         month_of_year=f'{relative_date.month}',
                     )
+                    
                     try:
                         # import pdb;pdb.set_trace()
                         # print(form['course_format'].value)
