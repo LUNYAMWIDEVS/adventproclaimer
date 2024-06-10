@@ -45,6 +45,7 @@ def send_batch_whatsapp_text_with_template(numbers,names,progress,paragraphs):
 
 
 def select_whatsapp_template(name,progress,paragraphs):
+    template = None
     if len(paragraphs) == 5:
         template = {
                 "name": "truth_nugget",
