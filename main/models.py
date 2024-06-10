@@ -209,26 +209,37 @@ class Assignment(models.Model):
         # Iterate through each paragraph
         for index, paragraph in enumerate(paragraphs):
             if index < len(paragraphs) - 1:
-                #  remove new line characters
-                message = paragraph.replace("\n","") 
-                # Check if adding the next paragraph would exceed the maximum character limit
-                if current_length + len(message) < max_chars:
-                    # If so & the msg is not empty, append the current message to the list of short messages
-                    if message:
-                        short_msg.append(message)
-                        print("Short message", message)
-                        current_length += len(message)
-                # check if the message length is close or greater than the maximum length & continue
-                if current_length + len(paragraphs[index +1]) < max_chars:
-                    message = ''
-                    continue
-                # otherwise start a new whatsapp message
-                else:
-                    messages.append(short_msg)
+                
+                if len(short_msg) == 5:
                     short_msg = []
                     current_length = 0
-                    print("Stopping max length reached", current_length)
+                    # print("Stopping max length reached", current_length)
                     continue
+                
+                else: 
+                    #  remove new line characters
+                    message = paragraph.replace("\n","") 
+                    # Check if adding the next paragraph would exceed the maximum character limit
+                    if current_length + len(message) < max_chars:
+                        # If so & the msg is not empty, append the current message to the list of short messages
+                        if message:
+                            short_msg.append(message)
+                            # print("Short message", message)
+                            current_length += len(message)
+                            
+            
+                    
+                    # check if the message length is close or greater than the maximum length & continue
+                    if current_length + len(paragraphs[index +1]) < max_chars:
+                        message = ''
+                        continue
+                    # otherwise start a new whatsapp message
+                    else:
+                        messages.append(short_msg)
+                        short_msg = []
+                        current_length = 0
+                        # print("Stopping max length reached", current_length)
+                        continue
         return messages
     
     
