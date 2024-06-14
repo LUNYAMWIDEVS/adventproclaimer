@@ -28,38 +28,39 @@ def make_phone_call(to_number,message):
 
 @shared_task
 def send_voice_over_call(to_number,file_name_prefix):
-    # Get the media folder path
-    # data = {
-    #     'authCode': 'YOUR_USER_CODE',
-    #     'articleText': 'Habari yako',
-    #     'configVoice': 'Rafiki',
-    #     'configLang': 'sw-KE',
-    #     'configPitch': '1.0',
-    #     'configSpeed': '1.0'
-    # }
-    # response = requests.post('https://api.voiser.net/v2/limitless/', json = data)
-    # print(response.json())
-    url = "https://api.voicer.io/api/v1/tts"
-    media_root = os.environ.get('DJANGO_SETTINGS_MODULE')
-    media_folder = os.path.join(os.path.dirname(media_root), 'media')
-
+    url = "https://api.genny.lovo.ai/api/v1/speakers?sort="
+    
     headers = {
-        'Authorization': 'Bearer YOUR_API_KEY',
-        'Content-Type': 'application/json'
+        "accept": "application/json",
+        "X-API-KEY": os.getenv('LOVO_API_KEY')
     }
-
-    data = {
-        "voice": "swahili-voice",
-        "text": "Your Swahili Text"
+    
+    response = requests.get(url, headers=headers)
+    speakers = response.json()
+    chege = None
+    for speaker in speakers['data']:
+        if speaker['displayName']=="Chege Odhiambo":
+            chege = speaker
+    url = "https://api.genny.lovo.ai/api/v1/tts/sync"
+    
+    payload = {
+        "speed": 1,
+        "speaker": chege['id'],
+        "text": "habari yako ndugu niambie habari za Yesu"
     }
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "X-API-KEY": os.getenv('LOVO_API_KEY')
+    }
+    
+    response = requests.post(url, json=payload, headers=headers)
+    
+    audio_data = response.json()
 
-    response = requests.post(url, headers=headers, data=json.dumps(data))
-    file_name = f'{file_name_prefix}.mp3'
-    # Save the audio file in the media folder
-    with open(os.path.join(media_folder, file_name), 'wb') as f:
-        f.write(response.content)
-
-
+    stream_url = None
+    for audio in audio_data['data']:
+        stream_url = ''.join(audio['urls'])
 
     client = vonage.Client(
         application_id=VONAGE_APPLICATION_ID,
@@ -67,9 +68,6 @@ def send_voice_over_call(to_number,file_name_prefix):
     )
 
     # Replace 'YOUR_GOOGLE_DRIVE_LINK' with the modified Google Drive link
-    stream_url = f'https://adventproclaimer.com/media/{file_name}'
-    # or
-    # stream_url = os.path.join(media_folder, file_name)
     
 
     # Create a new call and play the pre-recorded audio file
