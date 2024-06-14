@@ -620,6 +620,7 @@ def scheduleCourseMaterial(request, code, id):
                                             except IndexError as err:
                                                 print(f"Error: {err}")
                                 flattened_dict = {k: v for d in options_ for k, v in d.items()}
+                                # map the answer to a letter
                                 mapper = {0:"A",1:"B",2:"C",3:"D"}
                                 print(flattened_dict)
                                 correct_answer = None
