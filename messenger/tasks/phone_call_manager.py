@@ -27,7 +27,7 @@ def make_phone_call(to_number,message):
 
 
 @shared_task
-def send_voice_over_call(to_number,file_name_prefix):
+def send_voice_over_call(to_number,text):
     url = "https://api.genny.lovo.ai/api/v1/speakers?sort="
     
     headers = {
@@ -46,7 +46,7 @@ def send_voice_over_call(to_number,file_name_prefix):
     payload = {
         "speed": 1,
         "speaker": chege['id'],
-        "text": "habari yako ndugu niambie habari za Yesu"
+        "text": text
     }
     headers = {
         "accept": "application/json",
@@ -66,9 +66,6 @@ def send_voice_over_call(to_number,file_name_prefix):
         application_id=VONAGE_APPLICATION_ID,
         private_key=VONAGE_APPLICATION_PRIVATE_KEY_PATH
     )
-
-    # Replace 'YOUR_GOOGLE_DRIVE_LINK' with the modified Google Drive link
-    
 
     # Create a new call and play the pre-recorded audio file
     response = client.voice.create_call({

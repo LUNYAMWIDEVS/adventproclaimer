@@ -32,7 +32,7 @@
 </div>
 <!-- navigation links end -->
 <div class="container shadow-sm rounded border p-3 liner-gradient-sky text-light animate__animated animate__zoomInUp">
-   {% if quiz.start < time %}
+   
    <div class="row">
       <div class="col-6">
          <div class="fs-5 fw-bold"> {{quiz.title}} - Summary</div>
@@ -170,11 +170,6 @@
    </div>
    {% endfor %}
 </div>
-{% else %}
-<div class="fw-bold text-center">
-   Quiz not started yet
-</div>
-{% endif %}
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>

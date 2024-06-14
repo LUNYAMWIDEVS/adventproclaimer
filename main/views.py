@@ -557,6 +557,11 @@ def splitCourseMaterial(request, code,id):
         return redirect('std_login')
 
 def scheduleCourseMaterial(request, code, id):
+    """
+    - infer if they have the right permission 
+    - get a material
+    - get assignments
+    """
     error = None
     gmt_offset = timedelta(hours=+3)
     desired_timezone = timezone(gmt_offset)
@@ -574,38 +579,60 @@ def scheduleCourseMaterial(request, code, id):
                 for index,assignment in enumerate(assigments):
                     # TODO: order the assignments
                     # TODO: ensure the loop is not one assignment per day
+                    
                     messages = [
                         {
                             "role": "system",
                             "content": "You are a helpful expert in Bible and Spirit of Prophecy matters. Your aim is to ask questions,give title also based on the"
-                            f"information: {assignment.description}, return a json with 5 questions and 4 options and the answer in the format"
-                            "{'title':'title','questions':[{'question1':['option1','option2'],'answer':'answer'},{'question2':['option1','option2'],'answer':'answer'}]}"
+                            f"information: {assignment.description},"
                         },
-                        {"role": "user", "content": f"Question: {query}. \n Information: {information}"}
+                        {"role": "user", "content": f"return a json with 5 questions and 4 options and the answer in the format below and preserve the keys as is"
+                            "{'title':'title','questions':[{'question1':['option1','option2'],'answer':'answer'},{'question2':['option1','option2'],'answer':'answer'}]}"}
                     ]
                     
                     response = openai_client.chat.completions.create(
-                        model=model,
+                        model="gpt-3.5-turbo",
                         messages=messages,
                     )
-                    content = response.choices[0].message.content
+                    content = json.loads(response.choices[0].message.content)
+                    # generate a quiz
                     quiz = Quiz()
                     quiz.assignment = assignment
                     quiz.course = assignment.course_code
                     quiz.title = content.get('title')
+                    quiz.start = datetime.now(tz=desired_timezone)
+                    quiz.end = datetime.now(tz=desired_timezone)+timedelta(days=360)
                     quiz.save()
-
-                    for question_ in content.get('questions'):
-                        question = Question()
-                        question.quiz = quiz
-                        question.question = question_.get(f'question{i}')
-                        for option in question_.get(f'question{i}'):
-                            question.option1 = option.get('option1')
-                            question.option2 = option.get('option2')
-                            question.option3 = option.get('option3')
-                            question.option4 = option.get('option4')
-                            question.answer = option.get('answer')
-                        question.save()
+                    options = ['option1', 'option2', 'option3', 'option4']
+                    # check obtained respons has the appropriate keys
+                    if "questions" in content.keys():
+                        if "question1" in content["questions"][0].keys():
+                            # if checks have passed then save the questions and options
+                            for i,question_ in enumerate(content.get('questions'),start=1):
+                                question_info = question_[f'question{i}']
+                                for k,info in enumerate(question_info):
+                                    question = None
+                                    options_ = []
+                                    for j in range(1, len(options) + 1):
+                                            try:
+                                                option_value = question_info[j] if j < len(question_info) else "all choices"
+                                                options_.append({options[j-1]:option_value})
+                                            except IndexError as err:
+                                                print(f"Error: {err}")
+                                flattened_dict = {k: v for d in options_ for k, v in d.items()}
+                                mapper = {0:"A",1:"B",2:"C",3:"D"}
+                                print(flattened_dict)
+                                correct_answer = None
+                                for k,option_key in enumerate(flattened_dict):
+                                    if flattened_dict[option_key] == question_['answer']:
+                                        print(f"{k}===={flattened_dict[option_key]}==={mapper.get(k)}")
+                                        correct_answer = mapper.get(k)
+                                Question.objects.create(question=question_info[0],answer=correct_answer,quiz=quiz,marks=1,**flattened_dict)
+    
+                        else:
+                            print("The questions do not have their respective keys e.g. 'question1','question2'....")
+                    else:
+                        print(f"The response did not return questions in the keys for assignment ====> {assignment.id}")
 
                     schedule = None
                     relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1)
@@ -632,7 +659,15 @@ def scheduleCourseMaterial(request, code, id):
                         # import pdb;pdb.set_trace()
                         # print(form['course_format'].value)
                         # print(request.POST.get('course_format'))
-                        
+                        if request.POST.get('course_format') == 'P':
+                            # import pdb;pdb.set_trace()
+                            PeriodicTask.objects.update_or_create(
+                                crontab=schedule,                  # we created this above.
+                                name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
+                                task='messenger.tasks.phone_call_manager.send_voice_over_call',  # name of task.
+                                args=json.dumps([student.phone_number, assignment.description]),
+                            )
+                            
                         if request.POST.get('course_format') == 'W':
                             # import pdb;pdb.set_trace()
                             PeriodicTask.objects.update_or_create(

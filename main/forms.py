@@ -78,6 +78,7 @@ FORMATS = (
     ("N","---------"),
     ("E", "Email"),
     ("W", "Whatsapp"),
+    ("P", "Phone Call"),
 )
 class ScheduleMaterialForm(forms.ModelForm):
     course_format = forms.ChoiceField(choices=FORMATS)
