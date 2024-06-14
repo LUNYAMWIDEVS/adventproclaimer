@@ -18,6 +18,264 @@ def cut_string_to_max_length(input_string, max_length=912):
     return input_string
 
 @shared_task
+def send_batch_whatsapp_text_with_template(numbers,names,progress,paragraphs):
+    # message = ' '.join(message.split())
+    for i,number in enumerate(numbers):
+        
+        headers = {
+            "Authorization": f"Bearer {API_TOKEN}",
+            "Content-Type": "application/json"
+        }
+        parameters = {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": number,
+            "type": "template",
+            "template": select_whatsapp_template(names[i],progress,paragraphs)
+
+        }
+        session = Session()
+        session.headers.update(headers)
+        try:
+            response = session.post(URL, json=parameters)
+            data = json.loads(response.text)
+            print(f"data: {data}")
+        except (ConnectionError, Timeout, TooManyRedirects) as e:
+            print(e)
+
+
+def select_whatsapp_template(name,progress,paragraphs):
+    print(f"name========{name},progress====={progress},paragraphs======={paragraphs}")
+    template = None
+    if len(paragraphs) == 5:
+        template = {
+                "name": "truth_nugget",
+                "language": {"code": "en_gb"},
+                "components": [
+                    {
+                       "type": "header",
+                        "parameters": [
+                            {
+                                "type": "image",
+                                "image": {
+                                "link": "https://i.ibb.co/pL5yR7C/pexels-victor-150585-448835.jpg"
+                                }
+                            }
+                        ]  
+                    },
+                    
+                    {
+                        "type":"body",
+                        "parameters":[ 
+                            {
+                                "type":"text",
+                                "text": name,
+                            },
+                             {
+                                "type":"text",
+                                "text": progress,
+                            },
+                            {
+                                "type":"text",
+                                "text": paragraphs[0],
+                            },
+                            {
+                                "type":"text",
+                                "text": paragraphs[1],
+                            },
+                            {
+                                "type":"text",
+                                "text": paragraphs[2],
+                            },
+                            {
+                                "type":"text",
+                                "text": paragraphs[3],
+                            },
+                            {
+                                "type":"text",
+                                "text": paragraphs[4]
+                            }]
+                        
+                    },
+                    ]
+                
+                }
+    elif len(paragraphs) == 4:
+        template = {
+                "name": "truth_nugget_4_paragraphs",
+                "language": {"code": "en_gb"},
+                "components": [
+                    {
+                       "type": "header",
+                        "parameters": [
+                            {
+                                "type": "image",
+                                "image": {
+                                "link": "https://i.ibb.co/pL5yR7C/pexels-victor-150585-448835.jpg"
+                                }
+                            }
+                        ]  
+                    },
+                    
+                    {
+                        "type":"body",
+                        "parameters":[ 
+                            {
+                                "type":"text",
+                                "text": name,
+                            },
+                             {
+                                "type":"text",
+                                "text": progress,
+                            },
+                            {
+                                "type":"text",
+                                "text": paragraphs[0],
+                            },
+                            {
+                                "type":"text",
+                                "text": paragraphs[1],
+                            },
+                            {
+                                "type":"text",
+                                "text": paragraphs[2],
+                            },
+                            {
+                                "type":"text",
+                                "text": paragraphs[3],
+                            },
+                        ]
+                    },
+                    ]
+                
+                }
+    elif len(paragraphs) == 3:
+        template = {
+                "name": "truth_nugget_3_paragraphs",
+                "language": {"code": "en_gb"},
+                "components": [
+                    {
+                       "type": "header",
+                        "parameters": [
+                            {
+                                "type": "image",
+                                "image": {
+                                "link": "https://i.ibb.co/pL5yR7C/pexels-victor-150585-448835.jpg"
+                                }
+                            }
+                        ]  
+                    },
+                    
+                    {
+                        "type":"body",
+                        "parameters":[ 
+                            {
+                                "type":"text",
+                                "text": name,
+                            },
+                             {
+                                "type":"text",
+                                "text": progress,
+                            },
+                            {
+                                "type":"text",
+                                "text": paragraphs[0],
+                            },
+                            {
+                                "type":"text",
+                                "text": paragraphs[1],
+                            },
+                            {
+                                "type":"text",
+                                "text": paragraphs[2],
+                            },
+                        ]
+                    },
+                    ]
+                
+                }
+    elif len(paragraphs) == 2:
+        template = {
+                "name": "truth_nugget_2_paragraphs",
+                "language": {"code": "en_gb"},
+                "components": [
+                    {
+                       "type": "header",
+                        "parameters": [
+                            {
+                                "type": "image",
+                                "image": {
+                                "link": "https://i.ibb.co/pL5yR7C/pexels-victor-150585-448835.jpg"
+                                }
+                            }
+                        ]  
+                    },
+                    
+                    {
+                        "type":"body",
+                        "parameters":[ 
+                            {
+                                "type":"text",
+                                "text": name,
+                            },
+                             {
+                                "type":"text",
+                                "text": progress,
+                            },
+                            {
+                                "type":"text",
+                                "text": paragraphs[0],
+                            },
+                            {
+                                "type":"text",
+                                "text": paragraphs[1],
+                            },
+                        ]
+                    },
+                    ]
+                
+                }
+    elif len(paragraphs) == 1:
+        template = {
+                "name": "truth_nugget_1_paragraph",
+                "language": {"code": "en_gb"},
+                "components": [
+                    {
+                       "type": "header",
+                        "parameters": [
+                            {
+                                "type": "image",
+                                "image": {
+                                "link": "https://i.ibb.co/pL5yR7C/pexels-victor-150585-448835.jpg"
+                                }
+                            }
+                        ]  
+                    },
+                    
+                    {
+                        "type":"body",
+                        "parameters":[ 
+                            {
+                                "type":"text",
+                                "text": name,
+                            },
+                             {
+                                "type":"text",
+                                "text": progress,
+                            },
+                            {
+                                "type":"text",
+                                "text": paragraphs[0],
+                            },
+                        ]
+                    },
+                    ]
+                
+                }
+        
+    return template
+
+
 def send_batch_whatsapp_text(numbers,names,message):
     message = ' '.join(message.split())
     for i,number in enumerate(numbers):
@@ -62,7 +320,10 @@ def send_batch_whatsapp_text(numbers,names,message):
 
 
 
-def send_batch_whatsapp_text_non_async(numbers,names,message):
+
+@shared_task
+def send_batch_whatsapp_text(numbers,names,message):
+    message = ' '.join(message.split())
     for i,number in enumerate(numbers):
         
         headers = {
@@ -86,7 +347,7 @@ def send_batch_whatsapp_text_non_async(numbers,names,message):
                             },
                             {
                                 "type":"text",
-                                "text": message
+                                "text": cut_string_to_max_length(message.replace("\n",""))
                             }]
                         
                     }]
@@ -102,3 +363,6 @@ def send_batch_whatsapp_text_non_async(numbers,names,message):
             print(f"data: {data}")
         except (ConnectionError, Timeout, TooManyRedirects) as e:
             print(e)
+
+
+

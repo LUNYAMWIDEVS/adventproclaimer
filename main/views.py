@@ -12,7 +12,7 @@ from django.db.models import Count, Q
 from django.http import HttpResponseRedirect
 from .forms import AnnouncementForm, AssignmentForm, MaterialForm,SplitMaterialsForm,ScheduleMaterialForm
 from .helpers import upload_file,split_pdf
-from messenger.tasks.whatsapp_manager import send_batch_whatsapp_text
+from messenger.tasks.whatsapp_manager import send_batch_whatsapp_text_with_template
 from transformers import pipeline
 from datetime import timedelta, date, datetime, timezone
 from django_celery_beat.models import PeriodicTask, IntervalSchedule, CrontabSchedule
@@ -670,17 +670,19 @@ def scheduleCourseMaterial(request, code, id):
                             )
                             
                         if request.POST.get('course_format') == 'W':
+                            # handle whatsapp logic
+                            chunks = assigment.break_desc_into_whatsapp_msg_chunks()
                             # import pdb;pdb.set_trace()
                             PeriodicTask.objects.update_or_create(
                                 crontab=schedule,                  # we created this above.
                                 name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
-                                task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text',  # name of task.
+                                task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
                                 args=json.dumps([[student.phone_number], [student.name], assignment.description]),
                             )
                             PeriodicTask.objects.update_or_create(
                                 crontab=schedule,                  # we created this above.
                                 name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
-                                task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text',  # name of task.
+                                task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
                                 args=json.dumps([[student.phone_number], [student.name], f"{request.host()}/quiz/{assignment.course_code.code}"]),
                             )
                         if request.POST.get('course_format') == 'E':
@@ -693,7 +695,7 @@ def scheduleCourseMaterial(request, code, id):
                             PeriodicTask.objects.update_or_create(
                                 crontab=schedule,                  # we created this above.
                                 name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
-                                task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text',  # name of task.
+                                task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
                                 args=json.dumps([[student.phone_number], [student.name], f"{request.host()}/quiz/{assignment.course_code.code}"]),
                             )
                         
