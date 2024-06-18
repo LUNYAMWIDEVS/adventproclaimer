@@ -621,6 +621,7 @@ def scheduleCourseMaterial(request, code, id):
                                                 options_.append({options[j-1]:option_value})
                                             except IndexError as err:
                                                 print(f"Error: {err}")
+                                # TODO: shuffle the choices
                                 flattened_dict = {k: v for d in options_ for k, v in d.items()}
                                 # map the answer to a letter
                                 mapper = {0:"A",1:"B",2:"C",3:"D"}
