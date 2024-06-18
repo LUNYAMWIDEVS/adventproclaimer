@@ -22,6 +22,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import os
 import openai
+import pytz
 from openai import OpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter, SentenceTransformersTokenTextSplitter
 import chromadb
@@ -563,10 +564,11 @@ def scheduleCourseMaterial(request, code, id):
     - get assignments
     """
     error = None
-    gmt_offset = timedelta(hours=+3)
-    desired_timezone = timezone(gmt_offset)
+    #TODO: add timezone to be obtained from frontend
+    desired_timezone = pytz.timezone('Africa/Nairobi')
+    utc_now = datetime.utcnow()
+    current_time_in_utc = desired_timezone.localize(utc_now)
 
-    
     if is_faculty_authorised(request, code):
         if request.method == 'POST':
             form = ScheduleMaterialForm(request.POST or None)
@@ -635,26 +637,15 @@ def scheduleCourseMaterial(request, code, id):
                     else:
                         print(f"The response did not return questions in the keys for assignment ====> {assignment.id}")
 
-                    schedule = None
-                    relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1)
-                    random_minutes = random.randint(1,2)
-                    random_hour = None
-                    time_period = None
-                    if morning_flag:
-                        random_hour = random.randint(1, 2)  # morning devotion
-                        time_period = "Morning"
-                    else:
-                        random_hour = random.randint(1, 2)  # evening devotion
-                        time_period = "Evening"
-
-                    morning_flag = not morning_flag  # Toggle the flag
-                    schedule, _ = CrontabSchedule.objects.get_or_create(
-                        minute=f'{random_minutes}',
-                        hour=f'{random_hour}',
-                        day_of_week=f'*',
-                        day_of_month=f'{relative_date.day}',
-                        month_of_year=f'{relative_date.month}',
-                    )
+                    # we get todays date -  kenyan time
+                    # TODO: get relative date from frontend
+                    # for whatsapp send chunks after every hour till chunks are over based on 
+                    # the time the client wanted the text to be sent, also during the evening 
+                    # send the quiz
+                    # for email send morning and evening devotion and at evening 2 hours before evening 
+                    # devotion send quiz link
+                    # for phone calls send morning and evening devotion
+                    
                     
                     try:
                         # import pdb;pdb.set_trace()
@@ -662,6 +653,27 @@ def scheduleCourseMaterial(request, code, id):
                         # print(request.POST.get('course_format'))
                         if request.POST.get('course_format') == 'P':
                             # import pdb;pdb.set_trace()
+                            relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1)
+                            schedule = None
+                            random_minutes = random.randint(1,2)
+                            random_hour = None
+                            time_period = None
+                            if morning_flag:
+                                random_hour = random.randint(1, 2)  # morning devotion
+                                time_period = "Morning"
+                            else:
+                                random_hour = random.randint(1, 2)  # evening devotion
+                                time_period = "Evening"
+
+                            morning_flag = not morning_flag  # Toggle the flag
+                            schedule, _ = CrontabSchedule.objects.get_or_create(
+                                minute=f'{random_minutes}',
+                                hour=f'{random_hour}',
+                                day_of_week=f'*',
+                                day_of_month=f'{relative_date.day}',
+                                month_of_year=f'{relative_date.month}',
+                                timezone=desired_timezone
+                            )
                             PeriodicTask.objects.update_or_create(
                                 crontab=schedule,                  # we created this above.
                                 name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
@@ -671,21 +683,63 @@ def scheduleCourseMaterial(request, code, id):
                             
                         if request.POST.get('course_format') == 'W':
                             # handle whatsapp logic
+                            # TODO: implement relative date from the frontend
+                            relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1) #TODO: implement option of beginning today or tomorrow from frontend too.
                             chunks = assigment.break_desc_into_whatsapp_msg_chunks()
-                            # import pdb;pdb.set_trace()
+                            time_period = None
+                            for i,chunk in enumerate(chunks,start=1):
+                                schedule = None
+                                schedule, _ = CrontabSchedule.objects.get_or_create(
+                                    minute=f'{relative_date.minute}',
+                                    hour=f'{relative_date.hour+i}',
+                                    day_of_week=f'*',
+                                    day_of_month=f'{relative_date.day}',
+                                    month_of_year=f'{relative_date.month}',
+                                    timezone = desired_timezone
+                                )
+                                
+                                PeriodicTask.objects.update_or_create(
+                                    crontab=schedule,                  # we created this above.
+                                    name=f'Send Morning Assignment - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
+                                    task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
+                                    args=json.dumps([[student.phone_number], [student.name], chunk]),
+                                )
+
+                            schedule, _ = CrontabSchedule.objects.get_or_create(
+                                    minute=f'{relative_date.minute}',
+                                    hour=f'{relative_date.hour+12}', #TODO: add evening schedule from frontend
+                                    day_of_week=f'*',
+                                    day_of_month=f'{relative_date.day}',
+                                    month_of_year=f'{relative_date.month}',
+                                    timezone = desired_timezone
+                                )
                             PeriodicTask.objects.update_or_create(
                                 crontab=schedule,                  # we created this above.
-                                name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
+                                name=f'Send Evening Assignment - {student.name} - {assignment.id}',          # simply describes this periodic task.
                                 task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
-                                args=json.dumps([[student.phone_number], [student.name], assignment.description]),
-                            )
-                            PeriodicTask.objects.update_or_create(
-                                crontab=schedule,                  # we created this above.
-                                name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
-                                task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
-                                args=json.dumps([[student.phone_number], [student.name], f"{request.host()}/quiz/{assignment.course_code.code}"]),
+                                args=json.dumps([[student.phone_number], [student.name], f"{request.host()}/quizSummary/{assignment.course_code.code}/{quiz.pk}/"]),
                             )
                         if request.POST.get('course_format') == 'E':
+                            relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1)
+                            schedule = None
+                            random_minutes = random.randint(1,2)
+                            random_hour = None
+                            time_period = None
+                            if morning_flag:
+                                random_hour = random.randint(1, 2)  # morning devotion
+                                time_period = "Morning"
+                            else:
+                                random_hour = random.randint(1, 2)  # evening devotion
+                                time_period = "Evening"
+
+                            morning_flag = not morning_flag  # Toggle the flag
+                            schedule, _ = CrontabSchedule.objects.get_or_create(
+                                minute=f'{random_minutes}',
+                                hour=f'{random_hour}',
+                                day_of_week=f'*',
+                                day_of_month=f'{relative_date.day}',
+                                month_of_year=f'{relative_date.month}',
+                            )
                             PeriodicTask.objects.update_or_create(
                                 crontab=schedule,                  # we created this above.
                                 name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
