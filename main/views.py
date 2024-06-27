@@ -686,7 +686,7 @@ def scheduleCourseMaterial(request, code, id):
                             # handle whatsapp logic
                             # TODO: implement relative date from the frontend
                             relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1) #TODO: implement option of beginning today or tomorrow from frontend too.
-                            chunks = assigment.break_desc_into_whatsapp_msg_chunks()
+                            chunks = assignment.break_desc_into_whatsapp_msg_chunks()
                             time_period = None
                             for i,chunk in enumerate(chunks,start=1):
                                 schedule = None
