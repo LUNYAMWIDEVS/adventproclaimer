@@ -104,7 +104,7 @@ def handle_uploaded_file(f):
         for chunk in f.chunks():
             destination.write(chunk)
 
-
+@shared_task
 def upload_file(file_obj):
     """Insert new file.
     Returns : Id's of the file uploaded
