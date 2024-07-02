@@ -527,9 +527,10 @@ def addCourseMaterial(request, code):
             form.instance.course_code = Course.objects.get(code=code)
             file_id = None
             if form.is_valid():
-                file_id = upload_file(form.files['book'])    
-                form.instance.file = file_id
+                #form.instance.file = file_id
                 form.save()
+                print(form.instance.id)   
+                upload_file(form.files['book'],form.instance.id) 
                 messages.success(request, 'New course material added')
                 return redirect('/faculty/' + str(code))
             else:

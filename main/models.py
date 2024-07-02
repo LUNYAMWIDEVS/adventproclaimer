@@ -324,7 +324,7 @@ class Material(models.Model):
         ordering = ['-datetime']
 
     def __str__(self):
-        return self.file
+        return str(self.id)
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)

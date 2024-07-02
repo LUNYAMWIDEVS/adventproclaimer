@@ -105,7 +105,7 @@ def handle_uploaded_file(f):
             destination.write(chunk)
 
 @shared_task
-def upload_file(file_obj):
+def upload_file(file_obj,id):
     """Insert new file.
     Returns : Id's of the file uploaded
 
@@ -136,6 +136,11 @@ def upload_file(file_obj):
     except HttpError as error:
         print(F'An error occurred: {error}')
         file = None
+    
+    # import pdb;pdb.set_trace()
+    material = Material.objects.get(id=id)
+    material.file = file.get('id')
+    material.save()
 
     return file.get('id')
 
