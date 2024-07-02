@@ -1,6 +1,11 @@
 from __future__ import print_function
 import os
 import json
+import requests
+import random
+import logging
+import pytz
+from datetime import datetime
 from PyPDF2 import PdfReader,PdfWriter
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -11,7 +16,9 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from celery import shared_task
-from .models import Assignment,Material
+from .models import Assignment,Material,Student
+from quiz.models import Question,Quiz
+from django_celery_beat.models import PeriodicTask,CrontabSchedule
 from datetime import timedelta, date
 from .prompt import enrich_format_message
 from messenger.llm import query_gpt
@@ -315,3 +322,239 @@ def cleanup_folder(folder):
                 shutil.rmtree(file_path)
         except Exception as e:
             print('Failed to delete %s. Reason: %s' % (file_path, e))
+
+
+@shared_task
+def schedule_assignments(course_format,student_id,id,generate_quiz=True):
+    material = get_object_or_404(Material,id=id)
+    assignments =material.assignments.all()
+    desired_timezone = pytz.timezone('Africa/Nairobi')
+    utc_now = datetime.utcnow()
+    current_time_in_utc = desired_timezone.localize(utc_now)
+    student = Student.objects.get(student_id=student_id)
+
+    morning_flag = True
+    check_quiz = Quiz.objects.filter(course = material.course_code) # check if quiz already exists first
+    for index,assignment in enumerate(assignments):
+        if generate_quiz:
+            try:
+                # TODO: order the assignments
+                messages = [
+                    {
+                        "role": "system",
+                        "content": "You are a helpful expert in Bible and Spirit of Prophecy matters. Your aim is to ask questions,give title also based on the"
+                        f"information: {assignment.description},"
+                    },
+                    {"role": "user", "content": f"return a json with 5 questions and 4 options and the answer in the format below and preserve the json keys in english and format to strictly remain as shown below"
+                        "{'title':'title','questions':[{'question1':['option1','option2'],'answer':'answer'},{'question2':['option1','option2'],'answer':'answer'}]}"}
+                ]
+                # TODO: ensure the loop is not one assignment per day
+                body = {
+                    "model": "gpt-4-1106-preview",
+                    "response_format":{"type":"json_object"},
+                    "messages": messages,
+                }
+                header = {"Authorization": "Bearer " + os.getenv("OPENAI_API_KEY").strip()}
+
+                response = requests.post("https://api.openai.com/v1/chat/completions", json=body, headers=header)
+                logging.warn(str(["time elapsed", response.elapsed.total_seconds()]))
+                # logging.warn('\nmodel API response', str(res.json()))
+
+                
+                
+                # response = openai_client.chat.completions.create(
+                #     model="gpt-3.5-turbo",
+                #     messages=messages,
+                # )
+                # import pdb;pdb.set_trace()
+                results = response.json()
+                content = json.loads(results['choices'][0]['message']['content'])
+                print(content)
+                # generate a quiz
+                quiz = Quiz()
+                quiz.assignment = assignment
+                quiz.course = assignment.course_code
+                quiz.title = content.get('title')
+                quiz.start = datetime.now(tz=desired_timezone)
+                quiz.end = datetime.now(tz=desired_timezone)+timedelta(days=360)
+                quiz.save()
+                options = ['option1', 'option2', 'option3', 'option4']
+                # check obtained respons has the appropriate keys
+                if "questions" in content:
+                    # Iterate over each question in the content
+
+                    # if "question1" in content["questions"][0].keys():
+                        # Iterate over each question in the content
+                    for i,question_ in enumerate(content.get('questions'),start=1):
+                        
+                        answer_ = question_.pop('answer')
+                        print(answer_)
+                        # del question_['answer']
+                        first_key, _ = next(iter(question_.items()))
+                        
+                        question_info = question_[first_key]
+                        print(question_info)
+                        options_ = []
+                        if isinstance(question_info,str):
+                            del question_[first_key]
+                        else:
+                            question_info_ = question_info.pop(0)
+                            for k_ in question_info:
+                                options_.append({options[k_]:question_info[k_]})
+                            question_info = question_info_
+                            
+                        print(question_info)
+
+                        for k,info in enumerate(question_):
+                            if info == 'options':
+                                for i,j in enumerate(question_['options']):
+                                    try:
+                                        options_.append({options[i]:j})
+                                    except Exception as err:
+                                        print(err)
+                                    
+                                    
+                        # Flatten the list of dictionaries into a single dictionary
+                        flattened_dict_ = {k: v for d in options_ for k, v in d.items()}
+                        print(flattened_dict_)
+
+                        # Shuffle the items in the dictionary
+                        items = list(flattened_dict_.items())
+                        random.shuffle(items)
+                        flattened_dict = dict(items)
+
+                        # Map the answer to a letter
+                        mapper = {0: "A", 1: "B", 2: "C", 3: "D"}
+                        correct_answer = None
+                        for k,option_key in enumerate(flattened_dict):
+                            if flattened_dict[option_key] == answer_:
+                                print(f"{k}===={flattened_dict[option_key]}==={mapper.get(k)}")
+                                correct_answer = mapper.get(k)
+
+                        # Save the question and options to the database
+                        Question.objects.create(question=question_info,answer=correct_answer,quiz=quiz,marks=1,**flattened_dict)
+
+                    # else:
+                    #     print("The questions do not have their respective keys e.g. 'question1','question2'....")
+                else:
+                    print(f"The response did not return questions in the keys for assignment ====> {assignment.id}")
+            except Exception as err:
+                print(err)
+        # we get todays date -  kenyan time
+        # TODO: get relative date from frontend
+        # for whatsapp send chunks after every hour till chunks are over based on 
+        # the time the client wanted the text to be sent, also during the evening 
+        # send the quiz
+        # for email send morning and evening devotion and at evening 2 hours before evening 
+        # devotion send quiz link
+        # for phone calls send morning and evening devotion
+        
+        
+        try:
+            # import pdb;pdb.set_trace()
+            # print(form['course_format'].value)
+            # print(course_format)
+            if course_format == 'P':
+                # import pdb;pdb.set_trace()
+                relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1)
+                schedule = None
+                random_minutes = random.randint(1,2)
+                random_hour = None
+                time_period = None
+                if morning_flag:
+                    random_hour = random.randint(6,7)  # morning devotion
+                    time_period = "Morning"
+                else:
+                    random_hour = random.randint(6, 7)  # evening devotion
+                    time_period = "Evening"
+
+                morning_flag = not morning_flag  # Toggle the flag
+                schedule, _ = CrontabSchedule.objects.get_or_create(
+                    minute=f'{random_minutes}',
+                    hour=f'{random_hour}',
+                    day_of_week=f'*',
+                    day_of_month=f'{relative_date.day}',
+                    month_of_year=f'{relative_date.month}',
+                    timezone=desired_timezone
+                )
+                PeriodicTask.objects.update_or_create(
+                    crontab=schedule,                  # we created this above.
+                    name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
+                    task='messenger.tasks.phone_call_manager.send_voice_over_call',  # name of task.
+                    args=json.dumps([student.phone_number, assignment.description]),
+                )
+                
+            if course_format == 'W':
+                # handle whatsapp logic
+                # TODO: implement relative date from the frontend
+                relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1) #TODO: implement option of beginning today or tomorrow from frontend too.
+                chunks = assignment.break_desc_into_whatsapp_msg_chunks()
+                time_period = None
+                for i,chunk in enumerate(chunks,start=1):
+                    schedule = None
+                    schedule, _ = CrontabSchedule.objects.get_or_create(
+                        minute=f'{relative_date.minute}',
+                        hour=f'{relative_date.hour+i}',
+                        day_of_week=f'*',
+                        day_of_month=f'{relative_date.day}',
+                        month_of_year=f'{relative_date.month}',
+                        timezone = desired_timezone
+                    )
+                    
+                    PeriodicTask.objects.update_or_create(
+                        crontab=schedule,                  # we created this above.
+                        name=f'Send Morning Assignment - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
+                        task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
+                        args=json.dumps([[student.phone_number], [student.name], chunk]),
+                    )
+
+                schedule, _ = CrontabSchedule.objects.get_or_create(
+                        minute=f'{relative_date.minute}',
+                        hour=f'{relative_date.hour+12}', #TODO: add evening schedule from frontend
+                        day_of_week=f'*',
+                        day_of_month=f'{relative_date.day}',
+                        month_of_year=f'{relative_date.month}',
+                        timezone = desired_timezone
+                    )
+                PeriodicTask.objects.update_or_create(
+                    crontab=schedule,                  # we created this above.
+                    name=f'Send Evening Assignment - {student.name} - {assignment.id}',          # simply describes this periodic task.
+                    task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
+                    args=json.dumps([[student.phone_number], [student.name], f"do quiz @ https://adventproclaimer.com/quizSummary/{assignment.course_code.code}/{quiz.pk}/"]),
+                )
+            if course_format == 'E':
+                relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1)
+                schedule = None
+                random_minutes = random.randint(1,2)
+                random_hour = None
+                time_period = None
+                if morning_flag:
+                    random_hour = random.randint(6, 7)  # morning devotion
+                    time_period = "Morning"
+                else:
+                    random_hour = random.randint(6, 7)  # evening devotion
+                    time_period = "Evening"
+
+                morning_flag = not morning_flag  # Toggle the flag
+                schedule, _ = CrontabSchedule.objects.get_or_create(
+                    minute=f'{random_minutes}',
+                    hour=f'{random_hour}',
+                    day_of_week=f'*',
+                    day_of_month=f'{relative_date.day}',
+                    month_of_year=f'{relative_date.month}',
+                )
+                PeriodicTask.objects.update_or_create(
+                    crontab=schedule,                  # we created this above.
+                    name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
+                    task='messenger.tasks.email_manager.send_newsletter',  # name of task.
+                    args=json.dumps([student.name, student.email,assignment.description]),
+                )
+                PeriodicTask.objects.update_or_create(
+                    crontab=schedule,                  # we created this above.
+                    name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
+                    task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
+                    args=json.dumps([[student.phone_number], [student.name], f"{request.host()}/quiz/{assignment.course_code.code}"]),
+                )
+            
+        except Exception as err:
+            print(err)

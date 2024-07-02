@@ -11,7 +11,7 @@ from django.template.defaulttags import register
 from django.db.models import Count, Q
 from django.http import HttpResponseRedirect
 from .forms import AnnouncementForm, AssignmentForm, MaterialForm,SplitMaterialsForm,ScheduleMaterialForm
-from .helpers import upload_file,split_pdf
+from .helpers import upload_file,split_pdf,schedule_assignments
 from messenger.tasks.whatsapp_manager import send_batch_whatsapp_text_with_template
 from transformers import pipeline
 from datetime import timedelta, date, datetime, timezone
@@ -22,6 +22,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 import os
 import openai
+import requests
+import logging
 import pytz
 from openai import OpenAI
 from langchain.text_splitter import RecursiveCharacterTextSplitter, SentenceTransformersTokenTextSplitter
@@ -574,195 +576,14 @@ def scheduleCourseMaterial(request, code, id):
         if request.method == 'POST':
             form = ScheduleMaterialForm(request.POST or None)
             if form.is_valid():
-                material = get_object_or_404(Material,id=id)
-                assigments =material.assignments.all()
-                student = Student.objects.get(student_id=request.POST.get('user'))
                 
-                morning_flag = True
-                for index,assignment in enumerate(assigments):
-                    # TODO: order the assignments
-                    # TODO: ensure the loop is not one assignment per day
-                    
-                    messages = [
-                        {
-                            "role": "system",
-                            "content": "You are a helpful expert in Bible and Spirit of Prophecy matters. Your aim is to ask questions,give title also based on the"
-                            f"information: {assignment.description},"
-                        },
-                        {"role": "user", "content": f"return a json with 5 questions and 4 options and the answer in the format below and preserve the keys as is"
-                            "{'title':'title','questions':[{'question1':['option1','option2'],'answer':'answer'},{'question2':['option1','option2'],'answer':'answer'}]}"}
-                    ]
-                    
-                    response = openai_client.chat.completions.create(
-                        model="gpt-3.5-turbo",
-                        messages=messages,
-                    )
-                    content = json.loads(response.choices[0].message.content)
-                    # generate a quiz
-                    quiz = Quiz()
-                    quiz.assignment = assignment
-                    quiz.course = assignment.course_code
-                    quiz.title = content.get('title')
-                    quiz.start = datetime.now(tz=desired_timezone)
-                    quiz.end = datetime.now(tz=desired_timezone)+timedelta(days=360)
-                    quiz.save()
-                    options = ['option1', 'option2', 'option3', 'option4']
-                    # check obtained respons has the appropriate keys
-                    if "questions" in content.keys():
-                        if "question1" in content["questions"][0].keys():
-                            # if checks have passed then save the questions and options
-                            for i,question_ in enumerate(content.get('questions'),start=1):
-                                question_info = question_[f'question{i}']
-                                for k,info in enumerate(question_info):
-                                    question = None
-                                    options_ = []
-                                    for j in range(1, len(options) + 1):
-                                            try:
-                                                option_value = question_info[j] if j < len(question_info) else "all choices"
-                                                options_.append({options[j-1]:option_value})
-                                            except IndexError as err:
-                                                print(f"Error: {err}")
-                                # TODO: shuffle the choices
-                                flattened_dict = {k: v for d in options_ for k, v in d.items()}
-                                # map the answer to a letter
-                                mapper = {0:"A",1:"B",2:"C",3:"D"}
-                                print(flattened_dict)
-                                correct_answer = None
-                                for k,option_key in enumerate(flattened_dict):
-                                    if flattened_dict[option_key] == question_['answer']:
-                                        print(f"{k}===={flattened_dict[option_key]}==={mapper.get(k)}")
-                                        correct_answer = mapper.get(k)
-                                Question.objects.create(question=question_info[0],answer=correct_answer,quiz=quiz,marks=1,**flattened_dict)
-    
-                        else:
-                            print("The questions do not have their respective keys e.g. 'question1','question2'....")
-                    else:
-                        print(f"The response did not return questions in the keys for assignment ====> {assignment.id}")
+                student_id=request.POST.get('user')
+                course_format = request.POST.get('course_format')
 
-                    # we get todays date -  kenyan time
-                    # TODO: get relative date from frontend
-                    # for whatsapp send chunks after every hour till chunks are over based on 
-                    # the time the client wanted the text to be sent, also during the evening 
-                    # send the quiz
-                    # for email send morning and evening devotion and at evening 2 hours before evening 
-                    # devotion send quiz link
-                    # for phone calls send morning and evening devotion
-                    
-                    
-                    try:
-                        # import pdb;pdb.set_trace()
-                        # print(form['course_format'].value)
-                        # print(request.POST.get('course_format'))
-                        if request.POST.get('course_format') == 'P':
-                            # import pdb;pdb.set_trace()
-                            relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1)
-                            schedule = None
-                            random_minutes = random.randint(1,2)
-                            random_hour = None
-                            time_period = None
-                            if morning_flag:
-                                random_hour = random.randint(1, 2)  # morning devotion
-                                time_period = "Morning"
-                            else:
-                                random_hour = random.randint(1, 2)  # evening devotion
-                                time_period = "Evening"
-
-                            morning_flag = not morning_flag  # Toggle the flag
-                            schedule, _ = CrontabSchedule.objects.get_or_create(
-                                minute=f'{random_minutes}',
-                                hour=f'{random_hour}',
-                                day_of_week=f'*',
-                                day_of_month=f'{relative_date.day}',
-                                month_of_year=f'{relative_date.month}',
-                                timezone=desired_timezone
-                            )
-                            PeriodicTask.objects.update_or_create(
-                                crontab=schedule,                  # we created this above.
-                                name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
-                                task='messenger.tasks.phone_call_manager.send_voice_over_call',  # name of task.
-                                args=json.dumps([student.phone_number, assignment.description]),
-                            )
-                            
-                        if request.POST.get('course_format') == 'W':
-                            # handle whatsapp logic
-                            # TODO: implement relative date from the frontend
-                            relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1) #TODO: implement option of beginning today or tomorrow from frontend too.
-                            chunks = assignment.break_desc_into_whatsapp_msg_chunks()
-                            time_period = None
-                            for i,chunk in enumerate(chunks,start=1):
-                                schedule = None
-                                schedule, _ = CrontabSchedule.objects.get_or_create(
-                                    minute=f'{relative_date.minute}',
-                                    hour=f'{relative_date.hour+i}',
-                                    day_of_week=f'*',
-                                    day_of_month=f'{relative_date.day}',
-                                    month_of_year=f'{relative_date.month}',
-                                    timezone = desired_timezone
-                                )
-                                
-                                PeriodicTask.objects.update_or_create(
-                                    crontab=schedule,                  # we created this above.
-                                    name=f'Send Morning Assignment - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
-                                    task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
-                                    args=json.dumps([[student.phone_number], [student.name], chunk]),
-                                )
-
-                            schedule, _ = CrontabSchedule.objects.get_or_create(
-                                    minute=f'{relative_date.minute}',
-                                    hour=f'{relative_date.hour+12}', #TODO: add evening schedule from frontend
-                                    day_of_week=f'*',
-                                    day_of_month=f'{relative_date.day}',
-                                    month_of_year=f'{relative_date.month}',
-                                    timezone = desired_timezone
-                                )
-                            PeriodicTask.objects.update_or_create(
-                                crontab=schedule,                  # we created this above.
-                                name=f'Send Evening Assignment - {student.name} - {assignment.id}',          # simply describes this periodic task.
-                                task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
-                                args=json.dumps([[student.phone_number], [student.name], f"{request.host()}/quizSummary/{assignment.course_code.code}/{quiz.pk}/"]),
-                            )
-                        if request.POST.get('course_format') == 'E':
-                            relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1)
-                            schedule = None
-                            random_minutes = random.randint(1,2)
-                            random_hour = None
-                            time_period = None
-                            if morning_flag:
-                                random_hour = random.randint(1, 2)  # morning devotion
-                                time_period = "Morning"
-                            else:
-                                random_hour = random.randint(1, 2)  # evening devotion
-                                time_period = "Evening"
-
-                            morning_flag = not morning_flag  # Toggle the flag
-                            schedule, _ = CrontabSchedule.objects.get_or_create(
-                                minute=f'{random_minutes}',
-                                hour=f'{random_hour}',
-                                day_of_week=f'*',
-                                day_of_month=f'{relative_date.day}',
-                                month_of_year=f'{relative_date.month}',
-                            )
-                            PeriodicTask.objects.update_or_create(
-                                crontab=schedule,                  # we created this above.
-                                name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
-                                task='messenger.tasks.email_manager.send_newsletter',  # name of task.
-                                args=json.dumps([student.name, student.email,assignment.description]),
-                            )
-                            PeriodicTask.objects.update_or_create(
-                                crontab=schedule,                  # we created this above.
-                                name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
-                                task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
-                                args=json.dumps([[student.phone_number], [student.name], f"{request.host()}/quiz/{assignment.course_code.code}"]),
-                            )
-                        
-                    except ValidationError as err:
-                        error=err
-
-                    
-                if error:        
-                    messages.error(request, str(error))
-                else:
-                    messages.success(request, 'Material Successfully scheduled')    
+                
+                schedule_assignments.delay(course_format,student_id,id)
+                
+                messages.success(request, 'Material Successfully scheduling')    
                 
                 return redirect('/faculty/' + str(code))
             else:
