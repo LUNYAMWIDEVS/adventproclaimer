@@ -336,7 +336,7 @@ def schedule_assignments(course_format,student_id,id,generate_quiz=True):
     morning_flag = True
     check_quiz = Quiz.objects.filter(course = material.course_code) # check if quiz already exists first
     for index,assignment in enumerate(assignments):
-        if generate_quiz:
+        if not check_quiz.exists():
             try:
                 # TODO: order the assignments
                 messages = [
@@ -402,7 +402,7 @@ def schedule_assignments(course_format,student_id,id,generate_quiz=True):
                             for k_ in question_info:
                                 options_.append({options[k_]:question_info[k_]})
                             question_info = question_info_
-                            
+
                         print(question_info)
 
                         for k,info in enumerate(question_):
