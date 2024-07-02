@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'messenger',
     'health',
     'crispy_forms',
+    "crispy_bootstrap5",
     'payment',
     'paypal.standard.ipn',
     'helpers',
@@ -214,7 +215,8 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND')
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
-CRISPY_TEMPLATE_PACK = 'bootstrap4'
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
 MAILCHIMP_API_KEY = os.getenv('MAILCHIMP_API_KEY').strip()
 MAILCHIMP_DATA_CENTER = os.getenv('MAILCHIMP_DATA_CENTER').strip()
 MAILCHIMP_EMAIL_LIST_ID = os.getenv('MAILCHIMP_EMAIL_LIST_ID').strip()
