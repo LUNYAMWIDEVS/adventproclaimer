@@ -36,7 +36,7 @@ daphne
 decorator
 Deprecated
 distro
-Django
+Django==4.2.13
 django-celery-beat
 django-cleanup
 django-crispy-forms
