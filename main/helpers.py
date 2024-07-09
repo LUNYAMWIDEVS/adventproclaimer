@@ -552,8 +552,8 @@ def schedule_assignments(course_format,student_id,id,generate_quiz=True):
                 PeriodicTask.objects.update_or_create(
                     crontab=schedule,                  # we created this above.
                     name=f'Send Assignment {time_period} - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
-                    task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
-                    args=json.dumps([[student.phone_number], [student.name], f"{request.host()}/quiz/{assignment.course_code.code}"]),
+                    task='messenger.tasks.email_manager.send_newsletter',  # name of task.
+                    args=json.dumps([[student.phone_number], [student.name], f"do quiz @ https://adventproclaimer.com/quizSummary/{assignment.course_code.code}/"]),
                 )
             
         except Exception as err:
