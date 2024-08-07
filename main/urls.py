@@ -53,5 +53,7 @@ urlpatterns = [
          name='changePhotoFaculty'),
     path('search/', views.search, name='search'),
     path('error/', views.error, name='error'),
-    path('askQuestions/',views.AskQuestionsView.as_view())
+    path('askQuestions/',views.AskQuestionsView.as_view()),
+    path('lesson/<int:course_code>/<lesson_slug>/',
+         views.LessonDetailView.as_view(), name='lesson-detail')
 ]

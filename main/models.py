@@ -1,9 +1,10 @@
 import re
 from django.db import models
+from django.urls import reverse
 
 from froala_editor.fields import FroalaField
 # Create your models here.
-
+from memberships.models import Membership
 
 class Student(models.Model):
     student_id = models.IntegerField(primary_key=True)
@@ -77,6 +78,8 @@ class Department(models.Model):
         return self.courses.count()
 
 
+
+
 class Course(models.Model):
     code = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=255, null=False, unique=True)
@@ -86,6 +89,7 @@ class Course(models.Model):
         Faculty, on_delete=models.SET_NULL, null=True, blank=True)
     studentKey = models.IntegerField(null=False, unique=True)
     facultyKey = models.IntegerField(null=False, unique=True)
+    membership = models.ManyToManyField(Membership)
 
     class Meta:
         unique_together = ('code', 'department', 'name')
@@ -93,7 +97,29 @@ class Course(models.Model):
 
     def __str__(self):
         return self.name
+    
+    @property
+    def lessons(self):
+        return self.lesson_set.all().order_by('position')
 
+
+class Lesson(models.Model):
+    slug = models.SlugField()
+    title = models.CharField(max_length=120)
+    course = models.ForeignKey(Course, on_delete=models.SET_NULL, null=True)
+    position = models.IntegerField()
+    video_url = models.CharField(max_length=200)
+    thumbnail = models.ImageField()
+
+    def __str__(self):
+        return self.title
+
+    def get_absolute_url(self):
+        return reverse('main:lesson-detail',
+                       kwargs={
+                           'course_code': self.course.code,
+                           'lesson_slug': self.slug
+                       })
 
 class Announcement(models.Model):
     course_code = models.ForeignKey(

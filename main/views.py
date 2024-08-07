@@ -6,7 +6,11 @@ from django.urls import reverse
 from django.shortcuts import redirect, render,get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import Student, Course, Announcement, Assignment, Submission, Material, Faculty, Department
+from django.views.generic import ListView, DetailView, View
+from django.contrib.auth.mixins import LoginRequiredMixin
+from memberships.models import UserMembership
+
+from .models import Student, Course,Lesson, Announcement, Assignment, Submission, Material, Faculty, Department
 from django.template.defaulttags import register
 from django.db.models import Count, Q
 from django.http import HttpResponseRedirect
@@ -128,6 +132,19 @@ def std_logout(request):
     request.session.flush()
     return redirect('std_login')
 
+
+class LessonDetailView(LoginRequiredMixin, View):
+
+    def get(self, request, course_code, lesson_slug, *args, **kwargs):
+        course = get_object_or_404(Course, course_code=course_code)
+        lesson = get_object_or_404(Lesson, slug=lesson_slug)
+        user_membership = get_object_or_404(UserMembership, user=request.user)
+        user_membership_type = user_membership.membership.membership_type
+        course_allowed_mem_types = course.allowed_memberships.all()
+        context = { 'object': None }
+        if course_allowed_mem_types.filter(membership_type=user_membership_type).exists():
+            context = {'object': lesson}
+        return render(request, "main/lesson-detail.html", context)
 
 # Display all courses (student view)
 def myCourses(request):
