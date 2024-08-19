@@ -1,0 +1,12 @@
+<h1>MM Post List</h1>
+<a href="{% url 'medical_missionary_daily_report_create' %}">Create new MM post</a>
+<ul>
+    {% for post in posts %}
+        <li>
+            <a href="{% url 'medical_missionary_daily_report_update' post.id %}">{{ post.title }}</a>
+            <a href="{% url 'medical_missionary_daily_report_delete' post.id %}">Delete</a>
+        </li>
+    {% empty %}
+        <li>No MMR posts available.</li>
+    {% endfor %}
+</ul>

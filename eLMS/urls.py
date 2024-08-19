@@ -38,6 +38,9 @@ urlpatterns = [
     path('payment/',include('payment.urls')),
     path('appointment/',include('appointment.urls')),
     path('needs/',include('needs.urls')),
+    path('evangelism/',include('evangelism.urls')),
     path('froala_editor/', include('froala_editor.urls')),
     re_path(r'paypal/', include('paypal.standard.ipn.urls')),
+    path('blog/',include('posts.urls')),
+    path('store/', include('store.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

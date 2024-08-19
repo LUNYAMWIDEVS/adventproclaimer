@@ -45,10 +45,13 @@ def post_save_usermembership_create(sender, instance, created, *args, **kwargs):
 
     if not user_membership.paypal_customer_id:
         # Create a new PayPal customer (you might need to handle customer creation differently with PayPal)
-        free_membership = Membership.objects.get(membership_type='Free')
-        user_membership.paypal_customer_id = instance.email
-        user_membership.membership = free_membership
-        user_membership.save()
+        try:
+            free_membership = Membership.objects.get(membership_type='Free')
+            user_membership.paypal_customer_id = instance.email
+            user_membership.membership = free_membership
+            user_membership.save()
+        except Exception as err:
+            print(err)
 
 post_save.connect(post_save_usermembership_create,
                   sender=settings.AUTH_USER_MODEL)
