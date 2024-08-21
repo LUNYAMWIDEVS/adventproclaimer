@@ -1,28 +1,30 @@
+#server {
+ #   listen 80;
+  #  listen [::]:80;
+   # server_name adventproclaimer.com;
+    #location / {
+     #   rewrite ^ https://$host$request_uri? permanent;
+    #}
+#}
+
+
 server {
     listen 80;
     listen [::]:80;
-    server_name adventproclaimer.com;
-    location / {
-        rewrite ^ https://$host$request_uri? permanent;
-    }
-}
-
-
-server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
-    server_name adventproclaimer.com;
+    #listen 443 ssl;
+    #listen [::]:443 ssl;
+    #server_name adventproclaimer.com;
     charset utf-8;
 
-    ssl_certificate /etc/letsencrypt/live/adventproclaimer.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/adventproclaimer.com/privkey.pem;
+    #ssl_certificate /etc/letsencrypt/live/adventproclaimer.com/fullchain.pem;
+    #ssl_certificate_key /etc/letsencrypt/live/adventproclaimer.com/privkey.pem;
     
     location ~ /.well-known  {
         allow all;
     }
 
     location /static/ {
-        alias /www/static/;
+    #    alias /www/static/;
     }
 
     location / {
