@@ -15,7 +15,7 @@ def split_text(text, max_length):
 
 
 @shared_task
-def send_voice_over_call(to_number,text):
+def send_voice_over_call(to_number,url,text=None):
     url = "https://api.genny.lovo.ai/api/v1/speakers?sort="
     
     headers = {
@@ -23,38 +23,39 @@ def send_voice_over_call(to_number,text):
         "X-API-KEY": os.getenv('LOVO_API_KEY')
     }
     
-    response = requests.get(url, headers=headers)
-    speakers = response.json()
-    chege = None
-    for speaker in speakers['data']:
-        if speaker['displayName']=="Chege Odhiambo":
-            chege = speaker
+    #response = requests.get(url, headers=headers)
+    #speakers = response.json()
+    #chege = None
+    #for speaker in speakers['data']:
+     #   if speaker['displayName']=="Chege Odhiambo":
+      #      chege = speaker
     
-    text_blocks = split_text(text,max_length=500)
-    stream_urls = []
-    for text in text_blocks:
-        url = "https://api.genny.lovo.ai/api/v1/tts/sync"
+    #text_blocks = split_text(text,max_length=500)
+    #stream_urls = []
+    #for text in text_blocks:
+     #   url = "https://api.genny.lovo.ai/api/v1/tts/sync"
         
         
-        payload = {
-            "speed": 0.7,
-            "speaker": chege['id'],
-            "text": text
-        }
-        headers = {
-            "accept": "application/json",
-            "content-type": "application/json",
-            "X-API-KEY": os.getenv('LOVO_API_KEY')
-        }
+      #  payload = {
+       #     "speed": 0.7,
+        #    "speaker": chege['id'],
+         #   "text": text
+        #}
+        #headers = {
+         #   "accept": "application/json",
+          #  "content-type": "application/json",
+           # "X-API-KEY": os.getenv('LOVO_API_KEY')
+        #}
         
-        response = requests.post(url, json=payload, headers=headers)
+        #response = requests.post(url, json=payload, headers=headers)
         
-        audio_data = response.json()
+        #audio_data = response.json()
 
-        stream_url = None
-        for audio in audio_data['data']:
-            stream_url = ''.join(audio['urls'])
-        stream_urls.append(stream_url)
+        #stream_url = None
+        #for audio in audio_data['data']:
+         #   stream_url = ''.join(audio['urls'])
+        #stream_urls.append(stream_url)
+    stream_urls = [url]
     print(stream_urls)
     for stream_url in stream_urls:
         client = vonage.Client(
