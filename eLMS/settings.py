@@ -30,7 +30,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['presenttruth.herokuapp.com','127.0.0.1','www.presenttruthers.com','presenttruthers.com','34.42.99.68','34.16.171.81',
                  "34.125.149.128","0.0.0.0","adventproclaimer.com","34.16.208.222",
                  "e8fd-197-180-95-83.ngrok-free.app","dc22-2c0f-2a80-10d0-8d10-b55d-a7e-d40e-2e5a.ngrok-free.app",
-                 "8000-lunyamwidev-adventprocl-cm1tuigzf0n.ws-eu114.gitpod.io"]
+                 "8000-lunyamwidev-adventprocl-cm1tuigzf0n.ws-eu114.gitpod.io","89.117.60.173"]
 
 CSRF_TRUSTED_ORIGINS = ["https://adventproclaimer.com","https://presenttruth.herokuapp.com",'http://34.42.99.68',
                         "http://34.16.208.222/",
@@ -39,7 +39,7 @@ CSRF_TRUSTED_ORIGINS = ["https://adventproclaimer.com","https://presenttruth.her
                         "https://adventproclaimer.com/",
                         "https://e8fd-197-180-95-83.ngrok-free.app",
                         "https://dc22-2c0f-2a80-10d0-8d10-b55d-a7e-d40e-2e5a.ngrok-free.app",
-                        "https://8000-lunyamwidev-adventprocl-cm1tuigzf0n.ws-eu114.gitpod.io"]
+                        "https://8000-lunyamwidev-adventprocl-cm1tuigzf0n.ws-eu114.gitpod.io","http://89.117.60.173/","https://89.117.60.173/"]
 
 # Application definition
 
