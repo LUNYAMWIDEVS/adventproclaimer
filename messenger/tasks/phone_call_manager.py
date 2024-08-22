@@ -16,12 +16,12 @@ def split_text(text, max_length):
 
 @shared_task
 def send_voice_over_call(to_number,url,text=None):
-    url = "https://api.genny.lovo.ai/api/v1/speakers?sort="
+    # url = "https://api.genny.lovo.ai/api/v1/speakers?sort="
     
-    headers = {
-        "accept": "application/json",
-        "X-API-KEY": os.getenv('LOVO_API_KEY')
-    }
+    # headers = {
+    #     "accept": "application/json",
+    #     "X-API-KEY": os.getenv('LOVO_API_KEY')
+    # }
     
     #response = requests.get(url, headers=headers)
     #speakers = response.json()
@@ -69,6 +69,6 @@ def send_voice_over_call(to_number,url,text=None):
             'from': {'type': 'phone', 'number': VONAGE_NUMBER},
             'ncco': [{'action': 'stream', 'streamUrl': [stream_url]}]
         })
-        time.sleep(300)
+        # time.sleep(300)
 
         print(response)
