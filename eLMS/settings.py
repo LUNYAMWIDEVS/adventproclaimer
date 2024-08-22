@@ -190,7 +190,7 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.MD5PasswordHasher',
     'django.contrib.auth.hashers.UnsaltedSHA1PasswordHasher',
     'django.contrib.auth.hashers.UnsaltedMD5PasswordHasher',
-    'django.contrib.auth.hashers.CryptPasswordHasher',
+    # 'django.contrib.auth.hashers.CryptPasswordHasher',
 ]
 
 
