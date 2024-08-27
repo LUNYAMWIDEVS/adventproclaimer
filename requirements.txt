@@ -126,6 +126,7 @@ Pillow
 posthog
 prompt-toolkit
 protobuf
+psycopg2-binary
 ptyprocess
 pure-eval
 pyasn1

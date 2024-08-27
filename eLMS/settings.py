@@ -140,24 +140,24 @@ ASGI_APPLICATION = "eLMS.asgi.application"
 AUTH_USER_MODEL = 'auth.User'
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / "db.sqlite3",  # Assuming db.sqlite3 is in the project's base directory
-    }
-}
-
-
 # DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": os.getenv("POSTGRES_DBNAME").strip(),
-#         "USER": 'postgres',
-#         "PASSWORD": 'adventproclaimer',
-#         "HOST": 'postgres',
-#         "PORT": 5432,
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / "db.sqlite3",  # Assuming db.sqlite3 is in the project's base directory
 #     }
 # }
+
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DBNAME").strip(),
+        "USER": os.getenv("POSTGRES_USER").strip(),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD").strip(),
+        "HOST": os.getenv("POSTGRES_HOST").strip(),
+        "PORT": os.getenv("POSTGRES_PORT").strip(),
+    }
+}
 
 
 

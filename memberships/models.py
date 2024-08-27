@@ -51,7 +51,7 @@ def post_save_usermembership_create(sender, instance, created, *args, **kwargs):
             user_membership.membership = free_membership
             user_membership.save()
         except Exception as err:
-            print(err)
+            print(err)                                                                                                                                                                                                                                                                                                                                                                                                  
 
 post_save.connect(post_save_usermembership_create,
                   sender=settings.AUTH_USER_MODEL)
