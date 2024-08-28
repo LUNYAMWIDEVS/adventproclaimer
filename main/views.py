@@ -549,7 +549,8 @@ def addCourseMaterial(request, code):
                 #form.instance.file = file_id
                 form.save()
                 print(form.instance.id)   
-                upload_file.delay(form.files['book'],form.instance.id) 
+                
+                upload_file.delay([form.files['book']],form.instance.id) 
                 messages.success(request, 'New course material added')
                 return redirect('/faculty/' + str(code))
             else:
