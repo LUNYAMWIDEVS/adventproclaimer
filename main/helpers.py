@@ -30,7 +30,7 @@ SCOPES = {
     'docs':['https://www.googleapis.com/auth/documents']
 }
 DISCOVERY_DOC = 'https://docs.googleapis.com/$discovery/rest?version=v1'
-
+PARENT_FOLDER_ID = '1_c7FLhKFJz_j-jquhOkSOSv5cIg2sv9k'
 
 def generate_credentials_json():
     creds = {
@@ -128,7 +128,7 @@ def upload_file(file_obj,id):
         # create drive api client
         service = build('drive', 'v3', credentials=creds)
 
-        file_metadata = {'name': file_obj.name}
+        file_metadata = {'parents':[PARENT_FOLDER_ID],'name': file_obj.name}
         
         media = MediaFileUpload(temp_path,
                                 mimetype=file_obj.content_type)
@@ -163,7 +163,7 @@ def convert_pdf_gdocs(file_path,name):
         # create drive api client
         service = build('drive', 'v3', credentials=creds)
 
-        file_metadata = {
+        file_metadata = {'parents':[PARENT_FOLDER_ID],
             'name': name,
             'mimeType': 'application/vnd.google-apps.document'
         }
