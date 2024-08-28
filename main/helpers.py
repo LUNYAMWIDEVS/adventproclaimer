@@ -118,7 +118,7 @@ class ChunkedBytesIO(BytesIO):
             yield chunk
 
 @shared_task
-def upload_file(file_content,id):
+def upload_file(file_content,file_name,file_content_type):
     """Insert new file.
     Returns : Id's of the file uploaded
 
@@ -140,10 +140,10 @@ def upload_file(file_content,id):
         # create drive api client
         service = build('drive', 'v3', credentials=creds)
 
-        file_metadata = {'parents':[PARENT_FOLDER_ID],'name': file_obj.name}
+        file_metadata = {'parents':[PARENT_FOLDER_ID],'name': file_name}
         
         media = MediaFileUpload(temp_path,
-                                mimetype=file_obj.content_type)
+                                mimetype=file_content_type)
         # pylint: disable=maybe-no-member
         file = service.files().create(body=file_metadata, media_body=media,
                                       fields='id').execute()
