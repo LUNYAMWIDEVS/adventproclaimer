@@ -118,7 +118,7 @@ class ChunkedBytesIO(BytesIO):
             yield chunk
 
 @shared_task
-def upload_file(file_content,file_name,file_content_type):
+def upload_file(file_content,file_name,file_content_type,id):
     """Insert new file.
     Returns : Id's of the file uploaded
 
