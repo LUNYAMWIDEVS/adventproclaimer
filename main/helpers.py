@@ -109,7 +109,7 @@ def handle_uploaded_file(f):
             destination.write(chunk)
 
 @shared_task
-def upload_file(file_object,id):
+def upload_file(file_obj,id):
     """Insert new file.
     Returns : Id's of the file uploaded
 
@@ -117,7 +117,6 @@ def upload_file(file_object,id):
     TODO(developer) - See https://developers.google.com/identity
     for guides on implementing OAuth2 for the application.
     """
-    file_obj = file_object.pop()
     creds = get_creds('service_account_key.json','drive')
     temp_path = None
     if hasattr(file_obj,'temporary_file_path'):
