@@ -36,15 +36,7 @@
       <!-- course name starts -->
       <div class="rounded p-3 m-3 shadow d-flex justify-content-between">
          <span></span>
-         <h5 class="mt-2 fw-bold">{{course.department}}-{{course.code}} : {{course.name}}</h5>
          
-         <ol>
-            
-            {% for lesson in course.lessons %}
-            <li><a href="{{ lesson.get_absolute_url }}">{{ lesson.title }}</a></li>
-            {% endfor %}
-            
-         </ol>
          <div class="dropdown">
             <img class="dropdown-toggle" id="drop" data-bs-toggle="dropdown" aria-expanded="false" src="{% static 'images/icon/dropDown.png' %}"
                alt="Options" height="32">
