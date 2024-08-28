@@ -12,6 +12,7 @@ from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload,MediaIoBaseDownload
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google.oauth2 import service_account
 from google_auth_oauthlib.flow import InstalledAppFlow
 from django.conf import settings
 from django.shortcuts import get_object_or_404
@@ -69,7 +70,7 @@ def generate_credentials_json():
     with open("docs.json","w") as write_file:
         json.dump(docs,write_file)
 
-    with open("credentials.json", 'w') as outfile:
+    with open("service_account_key.json", 'w') as outfile:
         json.dump(creds, outfile)
     
     if not os.path.exists('media/'):
@@ -81,28 +82,24 @@ def generate_credentials_json():
 
 
 
-def get_creds(token_file,credentials_file,scopes):
+def get_creds(credentials_file,scopes):
+    if not os.path.exists('media/'):
+        os.makedirs('media/')
+    
+    if not os.path.exists('media/downloads/'):
+        os.makedirs('media/downloads/')
     # The file token_drive.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
     # import pdb;pdb.set_trace()
     # generate_credentials_json()
-    creds = None
-    token_json = os.path.join(settings.BASE_DIR, token_file)
-    credentials_json = os.path.join(settings.BASE_DIR, credentials_file)
-    if os.path.exists(token_json):
-        creds = Credentials.from_authorized_user_file(token_json, SCOPES[scopes])
+    creds = service_account.Credentials.from_service_account_file(
+        credentials_file, scopes=SCOPES[scopes])
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                credentials_json, SCOPES[scopes])
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open(token_json, 'w') as token:
-            token.write(creds.to_json())
+        
     
     return creds
 
@@ -120,7 +117,7 @@ def upload_file(file_obj,id):
     TODO(developer) - See https://developers.google.com/identity
     for guides on implementing OAuth2 for the application.
     """
-    creds = get_creds('drive.json','credentials.json','drive')
+    creds = get_creds('service_account_key.json','drive')
     temp_path = None
     if hasattr(file_obj,'temporary_file_path'):
         temp_path = file_obj.temporary_file_path()
@@ -160,7 +157,7 @@ def convert_pdf_gdocs(file_path,name):
     TODO(developer) - See https://developers.google.com/identity
     for guides on implementing OAuth2 for the application.
     """
-    creds = get_creds('drive.json','credentials.json','drive')
+    creds = get_creds('service_account_key.json','drive')
 
     try:
         # create drive api client
@@ -184,7 +181,7 @@ def convert_pdf_gdocs(file_path,name):
     return file.get('id')
 
 def get_file(file_id):
-    creds = get_creds('drive.json','credentials.json','drive')
+    creds = get_creds('service_account_key.json','drive')
     file = None
     try:
         service = build('drive', 'v3', credentials=creds)
@@ -205,7 +202,7 @@ def download_file(file_id, local_fd):
     local_fd: io.Base or file object, the stream that the Drive file's
         contents will be written to.
   """
-  creds = get_creds('drive.json','credentials.json','drive')
+  creds = get_creds('service_account_key.json','drive')
   service = build('drive', 'v3', credentials=creds)
   request = service.files().get_media(fileId=file_id)
   media_request = MediaIoBaseDownload(local_fd, request)
@@ -304,7 +301,7 @@ def read_structural_elements(elements):
 
 def derive_text(document_id):
     """Uses the Docs API to print out the text of a document."""
-    creds = get_creds('docs.json','credentials.json','docs')
+    creds = get_creds('service_account_key.json','docs')
     docs_service = build('docs', 'v1', credentials=creds)
     # docs_service = discovery.build(
     #     'docs', 'v1', http=http, discoveryServiceUrl=DISCOVERY_DOC)
