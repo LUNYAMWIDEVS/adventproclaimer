@@ -1,4 +1,5 @@
 from __future__ import print_function
+from io import BytesIO
 import os
 import json
 import requests
@@ -109,7 +110,7 @@ def handle_uploaded_file(f):
             destination.write(chunk)
 
 @shared_task
-def upload_file(file_obj,id):
+def upload_file(file_content,id):
     """Insert new file.
     Returns : Id's of the file uploaded
 
@@ -119,6 +120,9 @@ def upload_file(file_obj,id):
     """
     creds = get_creds('service_account_key.json','drive')
     temp_path = None
+    file_obj = BytesIO(file_content)
+
+    
     if hasattr(file_obj,'temporary_file_path'):
         temp_path = file_obj.temporary_file_path()
     else:
