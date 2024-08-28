@@ -17,7 +17,7 @@ from .views import (
 )
 
 urlpatterns = [
-    path('', IndexView.as_view(), name='home'),
+    path('blog/home', IndexView.as_view(), name='home'),
     # path('blog/', post_list, name='post-list'),
     path('blog/', PostListView.as_view(), name='post-list'),
     path('search/', search, name='search'),
