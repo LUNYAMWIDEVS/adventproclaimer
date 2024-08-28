@@ -109,6 +109,14 @@ def handle_uploaded_file(f):
         for chunk in f.chunks():
             destination.write(chunk)
 
+class ChunkedBytesIO(BytesIO):
+    def chunks(self, chunk_size=1 * 1024 * 1024):
+        while True:
+            chunk = self.read(chunk_size)
+            if not chunk:
+                break
+            yield chunk
+
 @shared_task
 def upload_file(file_content,id):
     """Insert new file.
@@ -120,7 +128,7 @@ def upload_file(file_content,id):
     """
     creds = get_creds('service_account_key.json','drive')
     temp_path = None
-    file_obj = BytesIO(file_content)
+    file_obj = ChunkedBytesIO(file_content)
 
     
     if hasattr(file_obj,'temporary_file_path'):
