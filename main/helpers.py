@@ -153,6 +153,8 @@ def upload_file_to_google_drive(course_code):
 
         response = None
         while response is None:
+            if not creds.valid:
+                creds.refresh(Request())
             try:
                 status, response = request.next_chunk()
                 if status:
