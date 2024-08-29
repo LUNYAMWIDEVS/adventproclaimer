@@ -73,7 +73,7 @@
 </div>
 <div id="course" data-code="{{ course.code }}"></div>
 <script type="text/javascript">
-   var courseCode = "{{ course.code }}";
+   var courseCode = "{{course.code}}";
    var md5 = "",
        csrf = $("input[name='csrfmiddlewaretoken']")[0].value,
        form_data = [{"name": "csrfmiddlewaretoken", "value": csrf}];
@@ -126,11 +126,12 @@
      done: function (e, data) { // Called when the file has completely uploaded
        $.ajax({
          type: "POST",
-         url: "/api/chunked_upload_complete/" + courseCode + "/",
+         url: "{% url 'api_chunked_upload_complete' %}",
          data: {
            csrfmiddlewaretoken: csrf,
            upload_id: data.result.upload_id,
-           md5: md5
+           md5: md5,
+           courseCode:courseCode
          },
          dataType: "json",
          success: function(data) {
