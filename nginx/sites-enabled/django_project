@@ -15,8 +15,8 @@ server {
     #listen [::]:443 ssl;
     #server_name adventproclaimer.com;
     charset utf-8;
-    client_max_body_size 10M;
-    
+    client_max_body_size 100M;
+
     #ssl_certificate /etc/letsencrypt/live/adventproclaimer.com/fullchain.pem;
     #ssl_certificate_key /etc/letsencrypt/live/adventproclaimer.com/privkey.pem;
     

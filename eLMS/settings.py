@@ -314,4 +314,4 @@ MPESA_STKPUSH=os.getenv("MPESA_STKPUSH")
 # settings.py
 
 # Set the maximum size of the request body to 10MB (10 * 1024 * 1024 bytes)
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024
