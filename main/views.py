@@ -35,6 +35,10 @@ import chromadb
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 from quiz.models import Question,Quiz
 
+from django.views.generic.base import TemplateView
+from chunked_upload.views import ChunkedUploadView, ChunkedUploadCompleteView
+from chunked_upload.models import ChunkedUpload
+
 from dotenv import load_dotenv, find_dotenv
 _ = load_dotenv(find_dotenv()) # read local .env file
 openai.api_key = os.environ['OPENAI_API_KEY']
@@ -539,6 +543,47 @@ def gradeSubmission(request, code, id, sub_id):
         return redirect('/error/')
 
 
+
+
+class ChunkedUploadDemo(TemplateView):
+    template_name = 'chunked_upload_demo.html'
+
+
+class MyChunkedUploadView(ChunkedUploadView):
+
+    model = ChunkedUpload
+    field_name = 'the_file'
+
+    def check_permissions(self, request):
+        # Allow non authenticated users to make uploads
+        pass
+
+
+class MyChunkedUploadCompleteView(ChunkedUploadCompleteView):
+
+    model = ChunkedUpload
+
+    def check_permissions(self, request):
+        # Allow non authenticated users to make uploads
+        pass
+
+    def on_completion(self, uploaded_file, request):
+        # Do something with the uploaded file. E.g.:
+        # * Store the uploaded file on another model:
+        # SomeModel.objects.create(user=request.user, file=uploaded_file)
+        # * Pass it as an argument to a function:
+        # function_that_process_file(uploaded_file)
+        print('uploaded_file-------->',uploaded_file)
+        print('request--------->',request)
+        print("passing here is not easy")
+        upload_file.delay() 
+        pass
+
+    def get_response_data(self, chunked_upload, request):
+        return {'message': ("You successfully uploaded '%s' (%s bytes)!" %
+                            (chunked_upload.filename, chunked_upload.offset))}
+
+
 def addCourseMaterial(request, code):
     if is_faculty_authorised(request, code):
         if request.method == 'POST':
@@ -550,7 +595,7 @@ def addCourseMaterial(request, code):
                 form.save()
                 print(form.instance.id)   
                 
-                upload_file.delay(form.files['book'].read(),form.files['book'].name,form.files['book'].content_type,form.instance.id) 
+                # upload_file.delay(form.files['book'].read(),form.files['book'].name,form.files['book'].content_type,form.instance.id) 
                 messages.success(request, 'New course material added')
                 return redirect('/faculty/' + str(code))
             else:

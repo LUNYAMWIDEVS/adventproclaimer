@@ -24,6 +24,7 @@ from django_celery_beat.models import PeriodicTask,CrontabSchedule
 from datetime import timedelta, date
 from .prompt import enrich_format_message
 from messenger.llm import query_gpt
+from chunked_upload.models import ChunkedUpload
 import shutil
 
 SCOPES = {
@@ -118,7 +119,7 @@ class ChunkedBytesIO(BytesIO):
             yield chunk
 
 @shared_task
-def upload_file(file_content,file_name,file_content_type,id):
+def upload_file():
     """Insert new file.
     Returns : Id's of the file uploaded
 
@@ -128,38 +129,47 @@ def upload_file(file_content,file_name,file_content_type,id):
     """
     creds = get_creds('service_account_key.json','drive')
     temp_path = None
-    file_obj = ChunkedBytesIO(file_content)
+    file_obj = ChunkedUpload.objects.last()
     
 
     
     if hasattr(file_obj,'temporary_file_path'):
-        temp_path = file_obj.temporary_file_path()
+        temp_path = file_obj.file.path
     else:
+        
         handle_uploaded_file(file_obj)
         temp_path = 'media/downloads/downloaded.pdf'
     try:
         # create drive api client
         service = build('drive', 'v3', credentials=creds)
 
-        file_metadata = {'parents':[PARENT_FOLDER_ID],'name': file_name}
+        file_metadata = {'parents':[PARENT_FOLDER_ID],'name': file_obj.filename}
         
-        media = MediaFileUpload(temp_path,
-                                mimetype=file_content_type,chunksize=100*1024*1024)
-        # pylint: disable=maybe-no-member
-        file = service.files().create(body=file_metadata, media_body=media,
-                                      fields='id').execute()
-        print(F'File ID: {file.get("id")}')
+        
+        media = MediaFileUpload(temp_path, resumable=True, chunksize=1024*1024)
+        request = service.files().create(body=file_metadata, media_body=media)
+
+        response = None
+        while response is None:
+            try:
+                status, response = request.next_chunk()
+                if status:
+                    print(f"Uploaded {int(status.progress() * 100)}%.")
+            except HttpError as e:
+                print(f"An error occurred: {e}")
+                response = None  # Reset response to continue upload
+
+        print(f"File uploaded: {response.get('id')}")
 
     except HttpError as error:
         print(F'An error occurred: {error}')
-        file = None
-    
+        
     # import pdb;pdb.set_trace()
-    material = Material.objects.get(id=id)
-    material.file = file.get('id')
+    material = Material()
+    material.file = response.get('id')
     material.save()
 
-    return file.get('id')
+    return response.get('id')
 
 
 def convert_pdf_gdocs(file_path,name):

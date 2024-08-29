@@ -79,7 +79,8 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'tinymce',
     'marketing',
-    'posts'
+    'posts',
+    'chunked_upload'
 ]
 
 MIDDLEWARE = [
