@@ -144,7 +144,7 @@ def upload_file(file_content,file_name,file_content_type,id):
         file_metadata = {'parents':[PARENT_FOLDER_ID],'name': file_name}
         
         media = MediaFileUpload(temp_path,
-                                mimetype=file_content_type,chunksize=1024*1024)
+                                mimetype=file_content_type,chunksize=100*1024*1024)
         # pylint: disable=maybe-no-member
         file = service.files().create(body=file_metadata, media_body=media,
                                       fields='id').execute()
