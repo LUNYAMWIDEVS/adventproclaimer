@@ -128,7 +128,8 @@ def upload_file(file_content,file_name,file_content_type,id):
     """
     creds = get_creds('service_account_key.json','drive')
     temp_path = None
-    file_obj = ChunkedBytesIO(file_content)
+    file_obj = ChunkedBytesIO(file_content.read())
+    
 
     
     if hasattr(file_obj,'temporary_file_path'):
