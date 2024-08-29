@@ -310,3 +310,8 @@ MPESA_CALLBACK_URL = os.getenv("MPESA_CALLBACK_URL")
 MPESA_API_URL=os.getenv("MPESA_API_URL")
 MPESA_AUTH_URL= os.getenv("MPESA_AUTH_URL")
 MPESA_STKPUSH=os.getenv("MPESA_STKPUSH")
+
+# settings.py
+
+# Set the maximum size of the request body to 10MB (10 * 1024 * 1024 bytes)
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
