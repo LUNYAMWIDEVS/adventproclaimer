@@ -128,19 +128,19 @@ def upload_file_to_google_drive():
     for guides on implementing OAuth2 for the application.
     """
     creds = get_creds('service_account_key.json','drive')
-    if not creds.valid:
-        creds.refresh(Request())
-    temp_path = None
+    # if not creds.valid:
+    #     creds.refresh(Request())
     file_obj = ChunkedUpload.objects.last()
+    temp_path = file_obj.file.path
     
 
     
-    if hasattr(file_obj,'temporary_file_path'):
-        temp_path = file_obj.file.path
-    else:
+    # if hasattr(file_obj,'temporary_file_path'):
+    #     temp_path = file_obj.file.path
+    # else:
         
-        handle_uploaded_file(file_obj)
-        temp_path = 'media/downloads/downloaded.pdf'
+    #     handle_uploaded_file(file_obj)
+    #     temp_path = 'media/downloads/downloaded.pdf'
     try:
         # create drive api client
         service = build('drive', 'v3', credentials=creds)
