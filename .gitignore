@@ -21,7 +21,6 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-media/
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -91,5 +90,7 @@ drive.json
 
 ## downloads
 media/downloads/
+media/chunked_uploads/
+
 *.txt
 *.json
