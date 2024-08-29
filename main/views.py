@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.shortcuts import redirect, render,get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.views.generic import ListView, DetailView, View
+from django.views.generic import ListView, DetailView, View,TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from memberships.models import UserMembership
 
@@ -584,27 +584,8 @@ class MyChunkedUploadCompleteView(ChunkedUploadCompleteView):
                             (chunked_upload.filename, chunked_upload.offset))}
 
 
-def addCourseMaterial(request, code):
-    if is_faculty_authorised(request, code):
-        if request.method == 'POST':
-            form = MaterialForm(request.POST, request.FILES)
-            form.instance.course_code = Course.objects.get(code=code)
-            file_id = None
-            if form.is_valid():
-                #form.instance.file = file_id
-                form.save()
-                print(form.instance.id)   
-                
-                # upload_file_to_google_drive.delay(form.files['book'].read(),form.files['book'].name,form.files['book'].content_type,form.instance.id) 
-                messages.success(request, 'New course material added')
-                return redirect('/faculty/' + str(code))
-            else:
-                return render(request, 'main/course-material.html', {'course': Course.objects.get(code=code), 'faculty': Faculty.objects.get(faculty_id=request.session['faculty_id']), 'form': form})
-        else:
-            form = MaterialForm()
-            return render(request, 'main/course-material.html', {'course': Course.objects.get(code=code), 'faculty': Faculty.objects.get(faculty_id=request.session['faculty_id']), 'form': form})
-    else:
-        return redirect('std_login')
+class addCourseMaterial(TemplateView):
+    template_name = 'main/course-material.html.html'
 
 def splitCourseMaterial(request, code,id):
     if is_faculty_authorised(request, code):
