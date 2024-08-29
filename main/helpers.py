@@ -128,8 +128,8 @@ def upload_file_to_google_drive():
     for guides on implementing OAuth2 for the application.
     """
     creds = get_creds('service_account_key.json','drive')
-    # if not creds.valid:
-    #     creds.refresh(Request())
+    if not creds.valid:
+        creds.refresh(Request())
     file_obj = ChunkedUpload.objects.last()
     temp_path = file_obj.file.path
     
