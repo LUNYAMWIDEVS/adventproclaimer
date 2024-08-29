@@ -584,7 +584,7 @@ class MyChunkedUploadCompleteView(ChunkedUploadCompleteView):
                             (chunked_upload.filename, chunked_upload.offset))}
 
 
-class addCourseMaterial(View):
+class addCourseMaterial(TemplateView):
     template_name = 'main/course-material.html'
 
 def splitCourseMaterial(request, code,id):
