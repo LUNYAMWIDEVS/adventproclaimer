@@ -32,7 +32,7 @@ urlpatterns = [
     path('gradeSubmission/<int:code>/<int:id>/<int:sub_id>',
          views.gradeSubmission, name='gradeSubmission'),
     path('course-material/<int:code>/',
-         views.addCourseMaterial.as_view(), name='addCourseMaterial'),
+         views.addCourseMaterial, name='addCourseMaterial'),
     path('split-material/<int:code>/<int:id>/',
          views.splitCourseMaterial, name='splitCourseMaterial'),
     path('schedule-material/<int:code>/<int:id>/',
