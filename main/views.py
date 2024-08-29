@@ -15,7 +15,7 @@ from django.template.defaulttags import register
 from django.db.models import Count, Q
 from django.http import HttpResponseRedirect
 from .forms import AnnouncementForm, AssignmentForm, MaterialForm,SplitMaterialsForm,ScheduleMaterialForm
-from .helpers import upload_file,split_pdf,schedule_assignments
+from .helpers import upload_file_to_google_drive,split_pdf,schedule_assignments
 from messenger.tasks.whatsapp_manager import send_batch_whatsapp_text_with_template
 from transformers import pipeline
 from datetime import timedelta, date, datetime, timezone
@@ -576,7 +576,7 @@ class MyChunkedUploadCompleteView(ChunkedUploadCompleteView):
         print('uploaded_file-------->',uploaded_file)
         print('request--------->',request)
         print("passing here is not easy")
-        upload_file.delay() 
+        upload_file_to_google_drive_to_google_drive.delay() 
         pass
 
     def get_response_data(self, chunked_upload, request):
@@ -595,7 +595,7 @@ def addCourseMaterial(request, code):
                 form.save()
                 print(form.instance.id)   
                 
-                # upload_file.delay(form.files['book'].read(),form.files['book'].name,form.files['book'].content_type,form.instance.id) 
+                # upload_file_to_google_drive.delay(form.files['book'].read(),form.files['book'].name,form.files['book'].content_type,form.instance.id) 
                 messages.success(request, 'New course material added')
                 return redirect('/faculty/' + str(code))
             else:

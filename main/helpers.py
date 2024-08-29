@@ -119,7 +119,7 @@ class ChunkedBytesIO(BytesIO):
             yield chunk
 
 @shared_task
-def upload_file():
+def upload_file_to_google_drive():
     """Insert new file.
     Returns : Id's of the file uploaded
 
@@ -128,6 +128,8 @@ def upload_file():
     for guides on implementing OAuth2 for the application.
     """
     creds = get_creds('service_account_key.json','drive')
+    if not creds.valid:
+        creds.refresh(Request())
     temp_path = None
     file_obj = ChunkedUpload.objects.last()
     
@@ -168,6 +170,9 @@ def upload_file():
     material = Material()
     material.file = response.get('id')
     material.save()
+
+
+    cleanup_folder('media/chunked_uploads/')
 
     return response.get('id')
 
