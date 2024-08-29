@@ -235,7 +235,7 @@ def download_file(file_id, local_fd):
 
 @shared_task
 def split_pdf(file_id,steps):
-    material = get_object_or_404(Material,file=file_id)
+    material = Material.objects.filter(file=file_id).last()
     file_path = 'media/downloads/downloaded.pdf'
     file = open(file_path, 'wb')
     download_file(file_id,file)
@@ -336,7 +336,7 @@ def cleanup_folder(folder):
 
 @shared_task
 def schedule_assignments(course_format,student_id,id,generate_quiz=True):
-    material = get_object_or_404(Material,id=id)
+    material = Material.objects.filter(id=id).last()
     assignments =material.assignments.all()
     desired_timezone = pytz.timezone('Africa/Nairobi')
     utc_now = datetime.utcnow()
