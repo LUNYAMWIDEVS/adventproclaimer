@@ -18,7 +18,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from celery import shared_task
-from .models import Assignment,Material,Student
+from .models import Assignment,Material,Student,Course
 from quiz.models import Question,Quiz
 from django_celery_beat.models import PeriodicTask,CrontabSchedule
 from datetime import timedelta, date
@@ -98,9 +98,9 @@ def get_creds(credentials_file,scopes):
     creds = service_account.Credentials.from_service_account_file(
         credentials_file, scopes=SCOPES[scopes])
     # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+    if not creds.valid:
+        # if creds and creds.expired and creds.refresh_token:
+        creds.refresh(Request())
         
     
     return creds
@@ -119,7 +119,7 @@ class ChunkedBytesIO(BytesIO):
             yield chunk
 
 @shared_task
-def upload_file_to_google_drive():
+def upload_file_to_google_drive(course_code):
     """Insert new file.
     Returns : Id's of the file uploaded
 
@@ -168,11 +168,13 @@ def upload_file_to_google_drive():
         
     # import pdb;pdb.set_trace()
     material = Material()
+    material.course_code = Course.objects.get(code=course_code)
     material.file = response.get('id')
     material.save()
 
 
     cleanup_folder('media/chunked_uploads/')
+    file_obj.delete()
 
     return response.get('id')
 
