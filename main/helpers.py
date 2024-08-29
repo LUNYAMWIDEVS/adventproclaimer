@@ -170,7 +170,8 @@ def upload_file_to_google_drive(course_code):
         
     # import pdb;pdb.set_trace()
     material = Material()
-    material.course_code = Course.objects.get(code=course_code)
+    print('coursecode---->',course_code)
+    material.course_code = Course.objects.filter(code=course_code).last()
     material.file = response.get('id')
     material.save()
 

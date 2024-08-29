@@ -576,7 +576,8 @@ class MyChunkedUploadCompleteView(ChunkedUploadCompleteView):
         print('uploaded_file-------->',uploaded_file)
         print('request--------->',request)
         print("passing here is not easy")
-        upload_file_to_google_drive.delay(kwargs.get("course_code")) 
+        upload_file_to_google_drive.delay(kwargs.get("course_code"))
+        print(kwargs.get("course_code")) 
         pass
 
     def get_response_data(self, chunked_upload, request):
