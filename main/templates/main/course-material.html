@@ -32,14 +32,14 @@
          </li>
          <li class="breadcrumb-item fw-bold"><a style="color: rgb(10, 10, 48)"
             href="{% url 'faculty' course.code %}">{{ course.name }}</a></li>
-         <li class="breadcrumb-item active animate__animated animate__backInRight" aria-current="page">Course material</li>
-      </ol>
-   </nav>
-</div>
-<!-- navigation links end -->
-<div class="container">
-   <div class="row justify-content-center">
-      <div class="col-sm-12 col-lg-8 shadow-lg rounded p-4">
+            <li class="breadcrumb-item active animate__animated animate__backInRight" aria-current="page">Course material</li>
+         </ol>
+      </nav>
+   </div>
+   <!-- navigation links end -->
+   <div class="container">
+      <div class="row justify-content-center">
+         <div class="col-sm-12 col-lg-8 shadow-lg rounded p-4">
                <div class="text-center">
                   <div class="fw-bold text-start mb-3">Add course material</div>
                   <div class="form-group">
@@ -49,6 +49,7 @@
 
                         <p id="progress"></p>
                         <div id="messages"></div>
+                        
                         <!-- {% for field in form %}
                         <div class="mb-3">
                            {{ field.label_tag }}
@@ -70,7 +71,9 @@
       </div>
    </div>
 </div>
+<div id="course" data-code="{{ course.code }}"></div>
 <script type="text/javascript">
+   var courseCode = $("#course").data("code");
    var md5 = "",
        csrf = $("input[name='csrfmiddlewaretoken']")[0].value,
        form_data = [{"name": "csrfmiddlewaretoken", "value": csrf}];
@@ -123,7 +126,7 @@
      done: function (e, data) { // Called when the file has completely uploaded
        $.ajax({
          type: "POST",
-         url: "{% url 'api_chunked_upload_complete' {{course.code}} %}",
+         url: "{% url 'api_chunked_upload_complete' 'dummy_code' %}".replace('dummy_code', courseCode),
          data: {
            csrfmiddlewaretoken: csrf,
            upload_id: data.result.upload_id,
