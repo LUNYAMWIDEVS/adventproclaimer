@@ -577,7 +577,8 @@ class MyChunkedUploadCompleteView(ChunkedUploadCompleteView):
         print('request--------->',request.POST)
         print('course_code----->',request.POST.get("courseCode"))
         print("passing here is not easy")
-        upload_file_to_google_drive.delay(course_code=int(request.POST.get("courseCode")))
+        # upload_file_to_google_drive.delay(course_code=int(request.POST.get("courseCode")))
+        upload_file_to_google_drive(course_code=int(request.POST.get("courseCode")))
         
         pass
 
