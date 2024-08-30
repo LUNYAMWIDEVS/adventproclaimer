@@ -335,6 +335,8 @@ def read_structural_elements(elements):
 def derive_text(document_id):
     """Uses the Docs API to print out the text of a document."""
     creds = get_creds('service_account_key.json','docs')
+    if not creds.valid:
+        creds.refresh(Request())
     docs_service = build('docs', 'v1', credentials=creds)
     # docs_service = discovery.build(
     #     'docs', 'v1', http=http, discoveryServiceUrl=DISCOVERY_DOC)
