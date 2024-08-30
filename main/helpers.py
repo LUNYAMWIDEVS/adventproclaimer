@@ -265,28 +265,38 @@ def split_pdf(file_id,steps):
     for i,range_ in enumerate(ranges):
         pdf_writer = PdfWriter()
         for page in range_:
-            text = pdf.pages[page].extract_text()
-            print(text)
-            pdf_writer.add_page(pdf.pages[page])
+            try:
+                text = pdf.pages[page].extract_text()
+                print(text)
+                pdf_writer.add_page(pdf.pages[page])
+            except Exception as err:
+                print(err)
 
         output_filename = 'media/downloads/{}_page_{}.pdf'.format('download', i+1)
 
         with open(output_filename, 'wb') as out:
-            pdf_writer.write(out)
-            out.close()
+            try:
+                pdf_writer.write(out)
+                out.close()
+            except Exception as err:
+                print(err)
 
-        assignment = Assignment()
-        assignment.course_code = material.course_code
-        assignment.file = convert_pdf_gdocs(output_filename,f'test_{i}')
-        text_to_send = derive_text(assignment.file)
-        # prompt = enrich_format_message(message=text_to_send)
-        # response = query_gpt(prompt)
-        assignment.description = text_to_send
-        assignment.marks = steps
-        assignment.deadline = date.today() + timedelta(days=len(ranges))
-        assignment.save()
-        material.assignments.add(assignment)
-        material.save()
+
+        try:
+            assignment = Assignment()
+            assignment.course_code = material.course_code
+            assignment.file = convert_pdf_gdocs(output_filename,f'test_{i}')
+            text_to_send = derive_text(assignment.file)
+            # prompt = enrich_format_message(message=text_to_send)
+            # response = query_gpt(prompt)
+            assignment.description = text_to_send
+            assignment.marks = steps
+            assignment.deadline = date.today() + timedelta(days=len(ranges))
+            assignment.save()
+            material.assignments.add(assignment)
+            material.save()
+        except Exception as err:
+            print(err)
         cleanup_folder('media/downloads/')
         print('Created: {}'.format(output_filename))
     return len(os.listdir('media/downloads/'))
@@ -360,6 +370,7 @@ def cleanup_folder(folder):
 def schedule_assignments(course_format,student_id,id,generate_quiz=True):
     material = Material.objects.filter(id=id).last()
     assignments =material.assignments.all()
+    print(assignments)
     desired_timezone = pytz.timezone('Africa/Nairobi')
     utc_now = datetime.utcnow()
     current_time_in_utc = desired_timezone.localize(utc_now)
