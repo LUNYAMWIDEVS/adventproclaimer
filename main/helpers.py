@@ -366,9 +366,10 @@ def schedule_assignments(course_format,student_id,id,generate_quiz=True):
     student = Student.objects.get(student_id=student_id)
 
     morning_flag = True
+    add_quiz = False
     check_quiz = Quiz.objects.filter(course = material.course_code) # check if quiz already exists first
     for index,assignment in enumerate(assignments):
-        if not check_quiz.exists():
+        if add_quiz:
             try:
                 # TODO: order the assignments
                 messages = [
