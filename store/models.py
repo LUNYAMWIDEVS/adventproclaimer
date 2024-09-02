@@ -56,7 +56,7 @@ class Cart(models.Model):
     date_added = models.DateField(auto_now_add=True)
 
     class Meta:
-        db_table = 'Cart'
+        db_table = 'cart'
         ordering = ['date_added']
 
     def __str__(self):
