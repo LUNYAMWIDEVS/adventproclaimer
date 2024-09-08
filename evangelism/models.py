@@ -31,10 +31,19 @@ class Survey(models.Model):
         ('Medical Missionary', 'Medical Missionary'),
         ('Adentist Muslim Relations', 'Adentist Muslim Relations'),
     )   
+    DAYS = (
+        ('Sunday', 'Sunday'),
+        ('Monday', 'Monday'),
+        ('Tuesday', 'Tuesday'),
+        ('Wednesday', 'Wednesday'),
+        ('Thursday', 'Thursday'),
+        ('Friday', 'Friday'),
+        ('Saturday', 'Saturday'),
+    )
     name = models.CharField(max_length=1024,null=True,blank=True)
-    scheduled_date = models.DateTimeField(null=True,blank=True) 
+    scheduled_day = models.CharField(choices=DAYS,default='Sunday',null=True,blank=True)
     scheduled_time = models.TimeField(null=True,blank=True)
-    interest_type = models.CharField(max_length=100,null=True,blank=True)
+    interest_type = models.CharField(max_length=100,choices=TYPES, default='Bible Worker',null=True,blank=True)
     bible_worker = models.ForeignKey(BibleWorkerDailyReport,on_delete=models.CASCADE,null=True,blank=True)
     medical_missionary = models.ForeignKey(MedicalMissionaryDailyReport,on_delete=models.CASCADE,null=True,blank=True)  
     adventist_muslim_relations = models.ForeignKey(AdventistMuslimRelationsDailyReport,on_delete=models.CASCADE,null=True,blank=True)   
