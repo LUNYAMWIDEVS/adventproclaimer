@@ -49,3 +49,7 @@ class Survey(models.Model):
     adventist_muslim_relations = models.ForeignKey(AdventistMuslimRelationsDailyReport,on_delete=models.CASCADE,null=True,blank=True)   
     date_posted = models.DateTimeField(auto_now_add=True)
     phone_number = models.CharField(max_length=50,null=True,blank=True)
+
+
+    def __str__(self) -> str:
+        return f"{self.name} - {self.scheduled_day} - {self.scheduled_time}"
