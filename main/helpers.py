@@ -26,6 +26,7 @@ from datetime import timedelta, date
 from .prompt import enrich_format_message
 from messenger.llm import query_gpt
 from chunked_upload.models import ChunkedUpload
+from django.utils import timezone
 import shutil
 
 SCOPES = {
@@ -112,14 +113,11 @@ def split_text(text, max_length):
 
 
 @shared_task()
-def upload_audio_files_to_google_drive(assignment_id):
-    assignments = Assignment.objects.filter(id=assignment_id) 
-    if assignments.exists():
-        pass
-    else:
-        last_assignment = Assignment.objects.last()
-        assignments = Assignment.objects.filter(id=last_assignment.id)
-
+def upload_audio_files_to_google_drive():
+    yesterday = timezone.now().date() - timezone.timedelta(days=1)
+    yesterday_start = timezone.make_aware(timezone.datetime.combine(yesterday, timezone.datetime.min.time()))
+    assignments = Assignment.objects.filter(datetime__gte=yesterday_start) 
+    print(assignments.count(),'----count of assignments----')
     url = "https://api.genny.lovo.ai/api/v1/speakers?sort="
     
     headers = {
@@ -129,14 +127,19 @@ def upload_audio_files_to_google_drive(assignment_id):
     
     response = requests.get(url, headers=headers)
     speakers = response.json()
+
     # print(speakers)
     chege = None
     for speaker in speakers['data']:
        if speaker['displayName']=="Chege Odhiambo":
            chege = speaker
     
+    print(chege,'----chege----')
+
     for text in assignments:
-        # import pdb;pdb.set_trace()
+        if text.audio_links.all().count() > 0:
+            continue
+
         text_blocks = split_text(text.description,max_length=500)
         stream_urls = []
         for text in text_blocks:
@@ -161,6 +164,7 @@ def upload_audio_files_to_google_drive(assignment_id):
             for audio in audio_data['data']:
                 stream_url = ''.join(audio['urls'])
             stream_urls.append(stream_url)
+            print(stream_urls)
             # Download the audio file
             audio_response = requests.get(stream_url)
             audio_filename = f"audio_{text[:10]}.mp3"  # You can customize the filename
