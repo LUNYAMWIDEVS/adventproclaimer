@@ -368,7 +368,6 @@ def split_pdf(file_id,steps):
             except Exception as err:
                 print(err)
 
-
         try:
             assignment = Assignment()
             assignment.course_code = material.course_code
