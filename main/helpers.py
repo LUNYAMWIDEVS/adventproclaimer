@@ -1,6 +1,7 @@
 from __future__ import print_function
 from io import BytesIO
 import os
+import uuid
 import json
 import requests
 import random
@@ -18,7 +19,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from django.conf import settings
 from django.shortcuts import get_object_or_404
 from celery import shared_task
-from .models import Assignment,Material,Student,Course
+from .models import Assignment,Material,Student,Course,AudioLink
 from quiz.models import Question,Quiz
 from django_celery_beat.models import PeriodicTask,CrontabSchedule
 from datetime import timedelta, date
@@ -105,6 +106,86 @@ def get_creds(credentials_file,scopes):
     
     return creds
 
+def split_text(text, max_length):
+    """Split the text into blocks of max_length characters or fewer."""
+    return [text[i:i+max_length] for i in range(0, len(text), max_length)]
+
+
+@shared_task()
+def upload_audio_files_to_google_drive(assignment_id):
+    assignments = Assignment.objects.filter(id=assignment_id) 
+    if assignments.exists():
+        pass
+    else:
+        last_assignment = Assignment.objects.last()
+        assignments = Assignment.objects.filter(id=last_assignment.id)
+
+    url = "https://api.genny.lovo.ai/api/v1/speakers?sort="
+    
+    headers = {
+        "accept": "application/json",
+        "X-API-KEY": os.getenv('LOVO_API_KEY')
+    }
+    
+    response = requests.get(url, headers=headers)
+    speakers = response.json()
+    # print(speakers)
+    chege = None
+    for speaker in speakers['data']:
+       if speaker['displayName']=="Chege Odhiambo":
+           chege = speaker
+    
+    for text in assignments:
+        # import pdb;pdb.set_trace()
+        text_blocks = split_text(text.description,max_length=500)
+        stream_urls = []
+        for text in text_blocks:
+            url = "https://api.genny.lovo.ai/api/v1/tts/sync"
+            
+            payload = {
+                "speed": 0.8,
+                "speaker": chege['id'],
+                "text": text
+            }
+            headers = {
+                "accept": "application/json",
+                "content-type": "application/json",
+                "X-API-KEY": os.getenv('LOVO_API_KEY')
+            }
+
+            response = requests.post(url, json=payload, headers=headers)
+
+            audio_data = response.json()
+
+            stream_url = None
+            for audio in audio_data['data']:
+                stream_url = ''.join(audio['urls'])
+            stream_urls.append(stream_url)
+            # Download the audio file
+            audio_response = requests.get(stream_url)
+            audio_filename = f"audio_{text[:10]}.mp3"  # You can customize the filename
+            with open(audio_filename, 'wb') as f:
+                f.write(audio_response.content)
+
+            # Upload the audio file to Google Drive
+            creds = get_creds('service_account_key.json','drive')
+            if not creds.valid:
+                creds.refresh(Request())
+            service = build('drive', 'v3', credentials=creds)
+            file_metadata = {'parents':[PARENT_FOLDER_ID],'name': audio_filename}
+            media = MediaFileUpload(audio_filename, mimetype='audio/mpeg')
+            file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+            print(f'File ID: {file.get("id")}')
+            audio_link = AudioLink()
+            audio_link.link_id = file.get('id')
+            audio_link.save()
+            text.audio_links.add(audio_link)
+            text.save()
+            # Optionally, you can delete the local file after uploading
+            os.remove(audio_filename)
+            
+
+
 def handle_uploaded_file(f):
     with open('media/downloads/downloaded.pdf', 'wb+') as destination:
         for chunk in f.chunks():
@@ -117,6 +198,8 @@ class ChunkedBytesIO(BytesIO):
             if not chunk:
                 break
             yield chunk
+
+
 
 @shared_task
 def upload_file_to_google_drive(course_code):

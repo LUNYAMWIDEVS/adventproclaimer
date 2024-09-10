@@ -137,7 +137,13 @@ class Announcement(models.Model):
     def post_date(self):
         return self.datetime.strftime("%d-%b-%y, %I:%M %p")
 
-    
+class AudioLink(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    link_id = models.CharField(max_length=255, null=False)   
+    def __str__(self) -> str:
+        return self.link_id     
+
+
 class Assignment(models.Model):
     course_code = models.ForeignKey(
         Course, on_delete=models.CASCADE, null=False)
@@ -146,6 +152,7 @@ class Assignment(models.Model):
     datetime = models.DateTimeField(auto_now_add=True, null=True,blank=True)
     deadline = models.DateTimeField(null=True,blank=True)
     file = models.CharField(max_length=255,null=True, blank=True)
+    audio_links = models.ManyToManyField(AudioLink)
     marks = models.DecimalField(max_digits=6, decimal_places=2, null=True,blank=True)
 
     class Meta:
