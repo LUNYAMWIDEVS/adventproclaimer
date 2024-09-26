@@ -39,6 +39,7 @@ distro
 Django
 django-allauth
 django-celery-beat
+django-celery-results
 django-cleanup
 django-crispy-forms
 django-froala-editor

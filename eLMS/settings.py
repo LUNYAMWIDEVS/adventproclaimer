@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'django_cleanup.apps.CleanupConfig',
     'froala_editor',
     'django_celery_beat',
+    'django_celery_results',
     'messenger',
     'health',
     'crispy_forms',
