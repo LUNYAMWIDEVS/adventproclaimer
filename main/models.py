@@ -358,7 +358,7 @@ class Material(models.Model):
         ordering = ['-datetime']
 
     def __str__(self):
-        return str(self.id)
+        return self.title if self.title else "Not yet attached to material"
 
     def delete(self, *args, **kwargs):
         super().delete(*args, **kwargs)
