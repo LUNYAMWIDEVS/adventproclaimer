@@ -342,6 +342,28 @@ def download_file(file_id, local_fd):
       return
 
 
+import re
+
+def clean_text(text):
+    """
+    Remove all newline characters, tab characters, and consecutive spaces from a given string.
+
+    Parameters:
+    text (str): The input string to be cleaned.
+
+    Returns:
+    str: The cleaned string.
+    """
+    # Remove newline and tab characters
+    text = re.sub(r'[\n\t]', '', text)
+
+    # Replace consecutive spaces with a single space
+    text = re.sub(r'\s+', ' ', text)
+
+    return text.strip()
+
+
+
 @shared_task
 def split_pdf(file_id,steps):
     material = Material.objects.filter(file=file_id).last()
@@ -361,7 +383,7 @@ def split_pdf(file_id,steps):
                     assignment = Assignment()
                     assignment.course_code = material.course_code
                     assignment.title = f"{material.description}-{i}"
-                    assignment.description = text
+                    assignment.description = clean_text(text)
                     assignment.marks = steps
                     assignment.deadline = date.today() + timedelta(days=len(ranges))
                     assignment.save()
