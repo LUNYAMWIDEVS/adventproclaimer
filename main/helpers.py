@@ -260,6 +260,8 @@ def upload_file_to_google_drive(course_code):
     print('coursecode---->',int(course_code))
     material.course_code = Course.objects.filter(code=int(course_code)).last()
     material.file = response.get('id')
+    material.title = slugify(file_obj.filename)
+    material.description = slugify(file_obj.filename)
     material.save()
 
 
@@ -355,6 +357,19 @@ def split_pdf(file_id,steps):
             try:
                 text = pdf.pages[page].extract_text()
                 print(text)
+                try:
+                    assignment = Assignment()
+                    assignment.course_code = material.course_code
+                    assignment.title = f"{material.description}-{i}"
+                    assignment.description = text
+                    assignment.marks = steps
+                    assignment.deadline = date.today() + timedelta(days=len(ranges))
+                    assignment.save()
+                    material.assignments.add(assignment)
+                    material.save()
+                except Exception as err:
+                    print(err)
+                
                 pdf_writer.add_page(pdf.pages[page])
             except Exception as err:
                 print(err)
@@ -368,21 +383,6 @@ def split_pdf(file_id,steps):
             except Exception as err:
                 print(err)
 
-        try:
-            assignment = Assignment()
-            assignment.course_code = material.course_code
-            assignment.file = convert_pdf_gdocs(output_filename,f'test_{i}')
-            text_to_send = derive_text(assignment.file)
-            # prompt = enrich_format_message(message=text_to_send)
-            # response = query_gpt(prompt)
-            assignment.description = text_to_send
-            assignment.marks = steps
-            assignment.deadline = date.today() + timedelta(days=len(ranges))
-            assignment.save()
-            material.assignments.add(assignment)
-            material.save()
-        except Exception as err:
-            print(err)
         cleanup_folder('media/downloads/')
         print('Created: {}'.format(output_filename))
     return len(os.listdir('media/downloads/'))
@@ -426,6 +426,62 @@ def read_structural_elements(elements):
             toc = value.get('tableOfContents')
             text += read_structural_elements(toc.get('content'))
     return text
+
+import re
+import unicodedata
+
+def slugify(text):
+    """
+    Convert a string into a slug.
+
+    Parameters:
+    text (str): The input string to be converted into a slug.
+
+    Returns:
+    str: The slugified string.
+    """
+    # Normalize the Unicode characters
+    text = unicodedata.normalize('NFKD', text)
+
+    # Convert to ASCII, ignoring errors
+    text = text.encode('ascii', 'ignore').decode('ascii')
+
+    # Convert to lowercase
+    text = text.lower()
+
+    # Replace spaces with hyphens
+    text = re.sub(r'\s+', '-', text)
+
+    # Remove any characters that are not alphanumeric or hyphens
+    text = re.sub(r'[^a-z0-9-]', '', text)
+
+    # Remove leading and trailing hyphens
+    text = text.strip('-')
+
+    return text
+
+
+@shared_task
+def refresh_materials():
+    materials = Material.objects.all()
+    for material in materials:
+        file = get_file(material.file)
+        if file is not None:
+            material.title = file.get('name')
+            material.description = slugify(file.get('name'))
+            material.save()
+            assignments = material.assignments.all()
+            for i,assignment in enumerate(assignments):
+                try:
+                    assignment.title = f"{slugify(file.get('name'))}-{i}"
+                    assignment.save()
+                    print(assignment.title)
+                except Exception as err:
+                    print(err,'error saving assignments')
+            print(slugify(file.get('name')))
+
+
+
 
 
 def derive_text(document_id):
