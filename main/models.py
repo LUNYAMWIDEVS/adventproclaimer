@@ -160,7 +160,7 @@ class Assignment(models.Model):
         ordering = ['datetime']
 
     def __str__(self):
-        return self.file
+        return self.title if self.title else "Not yet attached to material"
 
     def delete(self, *args, **kwargs):
         # self.file.delete()
