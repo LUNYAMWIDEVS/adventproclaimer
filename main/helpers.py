@@ -363,6 +363,21 @@ def clean_text(text):
     return text.strip()
 
 
+from django.db import connection
+
+def add_assignment_to_material(material_id, assignment_id):
+    with connection.cursor() as cursor:
+        # Raw SQL to insert into the intermediary table
+        cursor.execute(
+            """
+            INSERT INTO main_material_assignments (material_id, assignment_id)
+            VALUES (%s, %s)
+            ON CONFLICT (material_id, assignment_id) DO NOTHING;
+            """,
+            [material_id, assignment_id]
+        )
+
+
 
 @shared_task
 def split_pdf(file_id,steps):
@@ -391,8 +406,8 @@ def split_pdf(file_id,steps):
                     except Exception as err:
                         print(err,'failing to attach to material')
                     assignment.save()
-                    material.assignments.add(assignment)
-                    material.save()
+                    print(material.id, assignment.id, '----material and assignment ids----')
+                    add_assignment_to_material(material.id, assignment.id)
                 except Exception as err:
                     print(err)
                 
