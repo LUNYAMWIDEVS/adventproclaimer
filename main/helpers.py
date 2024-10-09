@@ -730,9 +730,9 @@ def schedule_assignments(course_format,student_id,id,generate_quiz=True):
                     
                     PeriodicTask.objects.create(
                         crontab=schedule,                  # we created this above.
-                        name=f'Send Morning Assignment - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
+                        name=f'Send Morning Assignment - {student.name} - {assignment.id}--{index}-{str(uuid.uuid4())}',          # simply describes this periodic task.
                         task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
-                        args=json.dumps([[student.phone_number], [student.name], str(i), clean_text(chunk)]),
+                        args=json.dumps([[student.phone_number], [student.name], str(i), chunk]),
                     )
 
                 # schedule, _ = CrontabSchedule.objects.get_or_create(
