@@ -156,8 +156,13 @@
       <div>
          {% for assignment in assignments %}
          <!-- individual assignment starts -->
+         {% if assignment.title %}
          <a class="fs-6 fw-bold" href="{% url 'submission' course.code assignment.id %}">
-         {{assignment.title}}-{{assignment.file}}</a>
+         {{assignment.title}}-{{assignment.file}}</a> 
+         {% else %}  
+         <a class="fs-6 fw-bold" href="{% url 'submission' course.code assignment.id %}">
+         NotAttachedToMaterialYet - {{assignment.file}}</a> 
+         {% endif %}
          <div class="d-flex justify-content-between">
             <div class="text-muted">
                <p>Submitted : {{ assignment.submission_set.count}} / {{ studentCount }} </p>
