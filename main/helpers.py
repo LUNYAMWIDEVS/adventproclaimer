@@ -709,27 +709,27 @@ def schedule_assignments(course_format,student_id,id,generate_quiz=True):
                         timezone = desired_timezone
                     )
                     
-                    PeriodicTask.objects.update_or_create(
+                    PeriodicTask.objects.create(
                         crontab=schedule,                  # we created this above.
                         name=f'Send Morning Assignment - {student.name} - {assignment.id}--{index}',          # simply describes this periodic task.
                         task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
-                        args=json.dumps([[student.phone_number], [student.name], str(i), chunk]),
+                        args=json.dumps([[student.phone_number], [student.name], str(i), clean_text(chunk)]),
                     )
 
-                schedule, _ = CrontabSchedule.objects.get_or_create(
-                        minute=f'{relative_date.minute}',
-                        hour=f'{relative_date.hour+12}', #TODO: add evening schedule from frontend
-                        day_of_week=f'*',
-                        day_of_month=f'{relative_date.day}',
-                        month_of_year=f'{relative_date.month}',
-                        timezone = desired_timezone
-                    )
-                PeriodicTask.objects.update_or_create(
-                    crontab=schedule,                  # we created this above.
-                    name=f'Send Evening Assignment - {student.name} - {assignment.id}',          # simply describes this periodic task.
-                    task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
-                    args=json.dumps([[student.phone_number], [student.name], str(i), f"do quiz @ https://adventproclaimer.com/quizSummary/{assignment.course_code.code}/{quiz.pk}/"]),
-                )
+                # schedule, _ = CrontabSchedule.objects.get_or_create(
+                #         minute=f'{relative_date.minute}',
+                #         hour=f'{relative_date.hour+12}', #TODO: add evening schedule from frontend
+                #         day_of_week=f'*',
+                #         day_of_month=f'{relative_date.day}',
+                #         month_of_year=f'{relative_date.month}',
+                #         timezone = desired_timezone
+                #     )
+                # PeriodicTask.objects.update_or_create(
+                #     crontab=schedule,                  # we created this above.
+                #     name=f'Send Evening Assignment - {student.name} - {assignment.id}',          # simply describes this periodic task.
+                #     task='messenger.tasks.whatsapp_manager.send_batch_whatsapp_text_with_template',  # name of task.
+                #     args=json.dumps([[student.phone_number], [student.name], str(i), f"do quiz @ https://adventproclaimer.com/quizSummary/{assignment.course_code.code}/{quiz.pk}/"]),
+                # )
             if course_format == 'E':
                 relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1)
                 schedule = None
