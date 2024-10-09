@@ -386,6 +386,7 @@ def split_pdf(file_id,steps):
                     assignment.description = clean_text(text)
                     assignment.marks = steps
                     assignment.deadline = date.today() + timedelta(days=len(ranges))
+                    assignment.materialoj = material
                     assignment.save()
                     material.assignments.add(assignment)
                     material.save()
@@ -492,7 +493,7 @@ def refresh_materials():
             material.title = file.get('name')
             material.description = slugify(file.get('name'))
             material.save()
-            assignments = material.assignments.all()
+            assignments = material.assignment_set.all()
             for i,assignment in enumerate(assignments):
                 try:
                     assignment.title = f"{slugify(file.get('name'))}-{i}"
@@ -533,7 +534,7 @@ def cleanup_folder(folder):
 @shared_task
 def schedule_assignments(course_format,student_id,id,generate_quiz=True):
     material = Material.objects.filter(id=id).last()
-    assignments =material.assignments.all()
+    assignments =material.assignment_set.all()
     print(assignments)
     desired_timezone = pytz.timezone('Africa/Nairobi')
     utc_now = datetime.utcnow()
