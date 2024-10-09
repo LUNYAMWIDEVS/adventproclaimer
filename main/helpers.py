@@ -386,7 +386,10 @@ def split_pdf(file_id,steps):
                     assignment.description = clean_text(text)
                     assignment.marks = steps
                     assignment.deadline = date.today() + timedelta(days=len(ranges))
-                    assignment.materialoj = material
+                    try:
+                        assignment.materialoj = get_object_or_404(Material, file=file_id)
+                    except Exception as err:
+                        print(err,'failing to attach to material')
                     assignment.save()
                     material.assignments.add(assignment)
                     material.save()
