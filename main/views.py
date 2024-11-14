@@ -647,9 +647,11 @@ def scheduleCourseMaterial(request, code, id):
                 
                 student_id=request.POST.get('user')
                 course_format = request.POST.get('course_format')
+                minute = request.POST.get('minute')
+                hour = request.POST.get('hour')
 
                 
-                schedule_assignments.delay(course_format,student_id,id)
+                schedule_assignments.delay(course_format,student_id,id,minute,hour)
                 
                 messages.success(request, 'Material Successfully scheduling')    
                 

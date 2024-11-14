@@ -122,6 +122,7 @@ overrides
 packaging
 parso
 paypalrestsdk
+pdfminer.six
 pexpect
 Pillow
 posthog

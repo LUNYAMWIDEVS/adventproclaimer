@@ -9,6 +9,7 @@ import logging
 import pytz
 from datetime import datetime
 from PyPDF2 import PdfReader,PdfWriter
+from pdfminer.high_level import extract_text as fallback_text_extraction
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload,MediaIoBaseDownload
@@ -394,22 +395,22 @@ def split_pdf(file_id,steps):
             try:
                 text = pdf.pages[page].extract_text()
                 print(text)
-                try:
-                    assignment = Assignment()
-                    assignment.course_code = material.course_code
-                    assignment.title = f"{material.description}-{i}"
-                    assignment.description = clean_text(text)
-                    assignment.marks = steps
-                    assignment.deadline = date.today() + timedelta(days=len(ranges))
-                    try:
-                        assignment.materialobj = get_object_or_404(Material, file=file_id)
-                    except Exception as err:
-                        print(err,'failing to attach to material')
-                    assignment.save()
-                    print(material.id, assignment.id, '----material and assignment ids----')
-                    add_assignment_to_material(material.id, assignment.id)
-                except Exception as err:
-                    print(err)
+                # try:
+                #     assignment = Assignment()
+                #     assignment.course_code = material.course_code
+                #     assignment.title = f"{material.description}-{i}"
+                #     assignment.description = clean_text(text)
+                #     assignment.marks = steps
+                #     assignment.deadline = date.today() + timedelta(days=len(ranges))
+                #     try:
+                #         assignment.materialobj = get_object_or_404(Material, file=file_id)
+                #     except Exception as err:
+                #         print(err,'failing to attach to material')
+                #     assignment.save()
+                #     print(material.id, assignment.id, '----material and assignment ids----')
+                #     add_assignment_to_material(material.id, assignment.id)
+                # except Exception as err:
+                #     print(err)
                 
                 pdf_writer.add_page(pdf.pages[page])
             except Exception as err:
@@ -424,6 +425,45 @@ def split_pdf(file_id,steps):
             except Exception as err:
                 print(err)
 
+        
+        # Assuming other necessary imports are already done
+
+        # with open(output_filename, 'rb') as f:
+        try:
+            # Create a PDF reader object
+            pdf_reader = PdfReader(output_filename)
+            
+            # Extract text from each page and concatenate it
+            text_content = ""
+            try:
+                for page in pdf_reader.pages:
+                    page_text = page.extract_text()
+                    if page_text:
+                        # Replace NULL characters with an empty string
+                        page_text = page_text.replace('\x00', '')
+                        text_content += page_text + "\n"  # Add a newline for separation
+            except Exception as exc:
+                print(exc)
+                text_content = fallback_text_extraction(output_filename)
+
+            assignment = Assignment()
+            assignment.course_code = material.course_code
+            assignment.title = f"{material.description}-{i}"
+            assignment.description = text_content.strip()  # Store extracted text
+            assignment.marks = steps
+            assignment.deadline = date.today() + timedelta(days=len(ranges))
+            
+            try:
+                assignment.materialobj = get_object_or_404(Material, file=file_id)
+            except Exception as err:
+                print(err, 'failing to attach to material')
+            
+            assignment.save()
+            print(material.id, assignment.id, '----material and assignment ids----')
+            add_assignment_to_material(material.id, assignment.id)
+            
+        except Exception as err:
+            print(err)
         cleanup_folder('media/downloads/')
         print('Created: {}'.format(output_filename))
     return len(os.listdir('media/downloads/'))
@@ -550,7 +590,7 @@ def cleanup_folder(folder):
 
 
 @shared_task
-def schedule_assignments(course_format,student_id,id,generate_quiz=True):
+def schedule_assignments(course_format,student_id,id,minute_=1, hour_=1, generate_quiz=True):
     material = Material.objects.filter(id=id).last()
     assignments =material.assignment_set.all()
     print(assignments)
@@ -697,8 +737,8 @@ def schedule_assignments(course_format,student_id,id,generate_quiz=True):
 
                 morning_flag = not morning_flag  # Toggle the flag
                 schedule, _ = CrontabSchedule.objects.get_or_create(
-                    minute=f'{random_minutes}',
-                    hour=f'{random_hour}',
+                    minute=f'{minute_}',
+                    hour=f'{hour_}',
                     day_of_week=f'*',
                     day_of_month=f'{relative_date.day}',
                     month_of_year=f'{relative_date.month}',
@@ -720,8 +760,8 @@ def schedule_assignments(course_format,student_id,id,generate_quiz=True):
                 for i,chunk in enumerate(chunks,start=1):
                     schedule = None
                     schedule, _ = CrontabSchedule.objects.get_or_create(
-                        minute=f'{relative_date.minute}',
-                        hour=f'{relative_date.hour+i}',
+                        minute=f'{minute_+i}',
+                        hour=f'{hour_}',
                         day_of_week=f'*',
                         day_of_month=f'{relative_date.day}',
                         month_of_year=f'{relative_date.month}',
@@ -764,8 +804,8 @@ def schedule_assignments(course_format,student_id,id,generate_quiz=True):
 
                 morning_flag = not morning_flag  # Toggle the flag
                 schedule, _ = CrontabSchedule.objects.get_or_create(
-                    minute=f'{random_minutes}',
-                    hour=f'{random_hour}',
+                    minute=f'{minute_}',
+                    hour=f'{hour_}',
                     day_of_week=f'*',
                     day_of_month=f'{relative_date.day}',
                     month_of_year=f'{relative_date.month}',

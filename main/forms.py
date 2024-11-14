@@ -82,11 +82,15 @@ FORMATS = (
 )
 class ScheduleMaterialForm(forms.ModelForm):
     course_format = forms.ChoiceField(choices=FORMATS)
+    minute = forms.NumberInput(attrs={'class': 'form-control', 'id': 'minute', 'name': 'minute', 'placeholder': 'Minute'})
+    hour = forms.NumberInput(attrs={'class': 'form-control', 'id': 'hour', 'name': 'hour', 'placeholder': 'Hour'})
 
     class Meta:
         model = Message
         exclude = ('sent','message','recipient')
         
     widgets = {
-        'course_format': forms.TextInput(attrs={'class': 'form-control'})
+        'course_format': forms.TextInput(attrs={'class': 'form-control'}),
+        'minute': forms.TextInput(attrs={'class': 'form-control'}),
+        'hour': forms.TextInput(attrs={'class': 'form-control'}),
     }
