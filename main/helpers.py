@@ -342,27 +342,39 @@ def download_file(file_id, local_fd):
       print ('Download Complete')
       return
 
-
 import re
 
 def clean_text(text):
     """
     Remove all newline characters, tab characters, and consecutive spaces from a given string.
+    Also limits the length of the text for WhatsApp messaging.
 
     Parameters:
     text (str): The input string to be cleaned.
 
     Returns:
-    str: The cleaned string.
+    str: The cleaned string, ready for WhatsApp.
     """
     # Remove newline and tab characters
-    text = re.sub(r'[\n\t]', '', text)
+    text = re.sub(r'[\n\t]', ' ', text)
 
     # Replace consecutive spaces with a single space
     text = re.sub(r'\s+', ' ', text)
 
-    return text.strip()
+    # Strip leading and trailing spaces
+    text = text.strip()
 
+    
+    # Optional: Remove unwanted characters (customize as needed)
+    # For example, remove specific punctuation or special characters
+    # Uncomment the next line if you want to remove punctuation
+    # text = re.sub(r'[^\w\s]', '', text)  # Removes punctuation but keeps words and spaces
+
+    # # Check if the cleaned text is empty
+    # if not text:
+    #     return "No content"  # Or handle it as needed
+
+    return text
 
 from django.db import connection
 
@@ -449,7 +461,7 @@ def split_pdf(file_id,steps):
             assignment = Assignment()
             assignment.course_code = material.course_code
             assignment.title = f"{material.description}-{i}"
-            assignment.description = text_content.strip()  # Store extracted text
+            assignment.description = clean_text(text_content.strip())  # Store extracted text
             assignment.marks = steps
             assignment.deadline = date.today() + timedelta(days=len(ranges))
             
