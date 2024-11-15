@@ -735,7 +735,7 @@ def schedule_assignments(course_format,student_id,id,minute_=1, hour_=1, generat
             # print(course_format)
             if course_format == 'P':
                 # import pdb;pdb.set_trace()
-                relative_date = datetime.now(tz=desired_timezone)
+                relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1)
                 schedule = None
                 random_minutes = random.randint(1,2)
                 random_hour = None
@@ -766,7 +766,7 @@ def schedule_assignments(course_format,student_id,id,minute_=1, hour_=1, generat
             if course_format == 'W':
                 # handle whatsapp logic
                 # TODO: implement relative date from the frontend
-                relative_date = datetime.now(tz=desired_timezone)  #TODO: implement option of beginning today or tomorrow from frontend too.
+                relative_date = datetime.now(tz=desired_timezone)  + timedelta(days=index+1) #TODO: implement option of beginning today or tomorrow from frontend too.
                 chunks = assignment.break_desc_into_whatsapp_msg_chunks()
                 time_period = None
                 for i,chunk in enumerate(chunks,start=1):
@@ -802,7 +802,7 @@ def schedule_assignments(course_format,student_id,id,minute_=1, hour_=1, generat
                 #     args=json.dumps([[student.phone_number], [student.name], str(i), f"do quiz @ https://adventproclaimer.com/quizSummary/{assignment.course_code.code}/{quiz.pk}/"]),
                 # )
             if course_format == 'E':
-                relative_date = datetime.now(tz=desired_timezone)
+                relative_date = datetime.now(tz=desired_timezone)  + timedelta(days=index+1)
                 schedule = None
                 random_minutes = random.randint(1,2)
                 random_hour = None
