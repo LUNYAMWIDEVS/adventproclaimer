@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Typing Tutor</title>
+    <style>
+        #words span {
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        .correct {
+            color: green;
+        }
+        .incorrect {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Typing Test</h1>
+    <div id="words">
+        {% for word in words %}
+            <span class="word">{{ word.text }}</span>
+        {% endfor %}
+    </div>
+    <input type="text" id="userInput" placeholder="Type here..." autofocus />
+    <button onclick="submitInput()">Submit</button>
+    
+    <div id="result"></div>
+
+    <script>
+        let currentWordIndex = 0;
+        const words = [{% for word in words %}{"text": "{{ word.text }}"}{% if not forloop.last %}, {% endif %}{% endfor %}];
+        const userInput = document.getElementById('userInput');
+        
+        function submitInput() {
+            const inputText = userInput.value.trim();
+            const currentWord = words[currentWordIndex].text;
+
+            if (inputText === currentWord) {
+                document.getElementById('result').innerHTML += `<span class="correct">${currentWord}</span> `;
+                currentWordIndex++;
+                userInput.value = '';
+                if (currentWordIndex >= words.length) {
+                    endTest();
+                } else {
+                    updateWords();
+                }
+            } else {
+                document.getElementById('result').innerHTML += `<span class="incorrect">${currentWord}</span> `;
+                userInput.value = '';
+            }
+        }
+
+        function updateWords() {
+            const wordElements = document.querySelectorAll('#words .word');
+            wordElements.forEach((el, index) => {
+                if (index === currentWordIndex) {
+                    el.style.textDecoration = 'underline';
+                } else {
+                    el.style.textDecoration = 'none';
+                }
+            });
+        }
+
+        function endTest() {
+            alert('Test completed! Your score is: ' + calculateScore());
+            // Optionally, you can redirect or reset the test here.
+        }
+
+        function calculateScore() {
+            return document.querySelectorAll('.correct').length; // Example score based on correct answers
+        }
+
+        // Initialize the first word
+        updateWords();
+    </script>
+</body>
+</html>

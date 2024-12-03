@@ -43,4 +43,5 @@ urlpatterns = [
     re_path(r'paypal/', include('paypal.standard.ipn.urls')),
     path('blog/',include('posts.urls')),
     path('store/', include('store.urls')),
+    path('typing/', include('typist.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

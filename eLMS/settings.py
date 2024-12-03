@@ -81,7 +81,9 @@ INSTALLED_APPS = [
     'tinymce',
     'marketing',
     'posts',
-    'chunked_upload'
+    'chunked_upload',
+    'typist'
+
 ]
 
 MIDDLEWARE = [
