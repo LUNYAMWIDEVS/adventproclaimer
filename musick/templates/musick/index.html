@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+{% load static %}
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="{% static 'musick/css/styles.css' %}">
+  <script src="{% static 'musick/js/script.js' %}" defer></script>
+  <title>Piano</title>
+</head>
+<body>
+  <div class="piano">
+    <div data-note="C" class="key white"></div>
+    <div data-note="Db" class="key black"></div>
+    <div data-note="D" class="key white"></div>
+    <div data-note="Eb" class="key black"></div>
+    <div data-note="E" class="key white"></div>
+    <div data-note="F" class="key white"></div>
+    <div data-note="Gb" class="key black"></div>
+    <div data-note="G" class="key white"></div>
+    <div data-note="Ab" class="key black"></div>
+    <div data-note="A" class="key white"></div>
+    <div data-note="Bb" class="key black"></div>
+    <div data-note="B" class="key white"></div>
+  </div>
+
+  <audio id="C" src="{% static 'musick/notes/piano/C.mp3' %}"></audio>
+  <audio id="Db" src="{% static 'musick/notes/piano/Db.mp3' %}"></audio>
+  <audio id="D" src="{% static 'musick/notes/piano/D.mp3' %}"></audio>
+  <audio id="Eb" src="{% static 'musick/notes/piano/Eb.mp3' %}"></audio>
+  <audio id="E" src="{% static 'musick/notes/piano/E.mp3' %}"></audio>
+  <audio id="F" src="{% static 'musick/notes/piano/F.mp3' %}"></audio>
+  <audio id="Gb" src="{% static 'musick/notes/piano/Gb.mp3' %}"></audio>
+  <audio id="G" src="{% static 'musick/notes/piano/G.mp3' %}"></audio>
+  <audio id="Ab" src="{% static 'musick/notes/piano/Ab.mp3' %}"></audio>
+  <audio id="A" src="{% static 'musick/notes/piano/A.mp3' %}"></audio>
+  <audio id="Bb" src="{% static 'musick/notes/piano/Bb.mp3' %}"></audio>
+  <audio id="B" src="{% static 'musick/notes/piano/B.mp3' %}"></audio>
+</body>
+</html>

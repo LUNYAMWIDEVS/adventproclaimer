@@ -82,7 +82,8 @@ INSTALLED_APPS = [
     'marketing',
     'posts',
     'chunked_upload',
-    'typist'
+    'typist',
+    'musick',
 
 ]
 

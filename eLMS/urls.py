@@ -44,4 +44,5 @@ urlpatterns = [
     path('blog/',include('posts.urls')),
     path('store/', include('store.urls')),
     path('typing/', include('typist.urls')),
+    path('musick/', include('musick.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
