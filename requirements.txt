@@ -159,6 +159,7 @@ rich
 rsa
 safetensors
 selenium
+sentry-sdk[django]
 service-identity
 shellingham
 six
