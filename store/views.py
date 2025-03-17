@@ -13,7 +13,11 @@ from django.template.loader import get_template
 from django.core.mail import EmailMessage
 
 
-def home(request, category_slug=None):
+def home(request):
+    return render(request, 'adventproclaimershop.html')
+
+
+def home_two(request, category_slug=None):
     category_page = None
     products_list = None
     if category_slug != None:
