@@ -113,6 +113,138 @@ def split_text(text, max_length):
     return [text[i:i+max_length] for i in range(0, len(text), max_length)]
 
 
+
+
+from quiz.models import Question, Quiz, StudentQuizResult  # Add this model if it doesn't exist
+
+def track_student_quiz_progress(student_id, quiz_id, score, total_questions):
+    """Track student quiz progress and performance"""
+    try:
+        from quiz.models import StudentQuizResult
+        
+        result, created = StudentQuizResult.objects.get_or_create(
+            student_id=student_id,
+            quiz_id=quiz_id,
+            defaults={
+                'score': score,
+                'total_questions': total_questions,
+                'percentage': (score / total_questions) * 100,
+                'completed_at': timezone.now()
+            }
+        )
+        
+        if not created:
+            # Update existing result if better score
+            if score > result.score:
+                result.score = score
+                result.percentage = (score / total_questions) * 100
+                result.completed_at = timezone.now()
+                result.save()
+                
+        return result
+    except Exception as e:
+        print(f"Error tracking quiz progress: {e}")
+        return None
+
+@shared_task
+def schedule_quiz_after_assignment(assignment_id, student_id, delay_hours=2):
+    """Schedule quiz to be sent after assignment completion"""
+    try:
+        assignment = Assignment.objects.get(id=assignment_id)
+        student = Student.objects.get(student_id=student_id)
+        quiz = Quiz.objects.filter(assignment=assignment).first()
+        
+        if quiz:
+            desired_timezone = pytz.timezone('Africa/Nairobi')
+            send_time = datetime.now(tz=desired_timezone) + timedelta(hours=delay_hours)
+            
+            schedule, _ = CrontabSchedule.objects.get_or_create(
+                minute=send_time.minute,
+                hour=send_time.hour,
+                day_of_week='*',
+                day_of_month=send_time.day,
+                month_of_year=send_time.month,
+                timezone=desired_timezone
+            )
+            
+            PeriodicTask.objects.create(
+                crontab=schedule,
+                name=f'Send Quiz - {student.name} - {quiz.id}',
+                task='messenger.tasks.whatsapp_manager.send_quiz_link',
+                args=json.dumps([student.phone_number, f"Take your quiz: https://adventproclaimer.com/quiz/{quiz.id}/"]),
+            )
+    except Exception as e:
+        print(f"Error scheduling quiz: {e}")
+
+
+@shared_task()
+def generate_multilingual_audio(assignment_id, languages=['en', 'sw']):
+    """Generate audio in multiple languages"""
+    try:
+        assignment = Assignment.objects.get(id=assignment_id)
+        
+        url = "https://api.genny.lovo.ai/api/v1/speakers?sort="
+        headers = {
+            "accept": "application/json",
+            "X-API-KEY": os.getenv('LOVO_API_KEY')
+        }
+        
+        response = requests.get(url, headers=headers)
+        speakers = response.json()
+        
+        # Define speakers for different languages
+        language_speakers = {
+            'en': None,  # English speaker
+            'sw': None   # Swahili speaker
+        }
+        
+        # Find appropriate speakers
+        for speaker in speakers['data']:
+            if 'english' in speaker['displayName'].lower() or speaker['displayName'] == "Chege Odhiambo":
+                language_speakers['en'] = speaker
+            elif 'swahili' in speaker['displayName'].lower():
+                language_speakers['sw'] = speaker
+        
+        for lang in languages:
+            if language_speakers[lang] is None:
+                continue
+                
+            # Translate text if needed
+            text_to_convert = assignment.description
+            if lang == 'sw' and lang != 'en':
+                # Add translation logic here using Google Translate API
+                text_to_convert = translate_text(assignment.description, 'sw')
+            
+            text_blocks = split_text(text_to_convert, max_length=500)
+            
+            for i, text_block in enumerate(text_blocks):
+                audio_url = generate_audio_with_lovo(text_block, language_speakers[lang]['id'])
+                if audio_url:
+                    # Save audio link with language info
+                    audio_link = AudioLink()
+                    audio_link.link_id = upload_audio_to_drive(audio_url, f"{assignment.id}_{lang}_{i}")
+                    audio_link.language = lang
+                    audio_link.save()
+                    assignment.audio_links.add(audio_link)
+            
+        assignment.save()
+        
+    except Exception as e:
+        print(f"Error generating multilingual audio: {e}")
+
+def translate_text(text, target_language):
+    """Translate text using Google Translate API"""
+    try:
+        # Implement Google Translate API call here
+        # This is a placeholder - you'll need to set up Google Translate API
+        from googletrans import Translator
+        translator = Translator()
+        result = translator.translate(text, dest=target_language)
+        return result.text
+    except Exception as e:
+        print(f"Translation error: {e}")
+        return text
+
 @shared_task()
 def upload_audio_files_to_google_drive():
     yesterday = timezone.now().date() - timezone.timedelta(days=1)
@@ -762,6 +894,33 @@ def schedule_assignments(course_format,student_id,id,minute_=1, hour_=1, generat
                     task='messenger.tasks.phone_call_manager.send_voice_over_call',  # name of task.
                     args=json.dumps([student.phone_number, assignment.description]),
                 )
+
+            
+            # In the schedule_assignments function, add SMS support:
+            if course_format == 'S':  # SMS format
+                relative_date = datetime.now(tz=desired_timezone) + timedelta(days=index+1)
+                
+                # Break assignment into SMS-sized chunks (160 characters)
+                sms_chunks = assignment.break_desc_into_sms_chunks()  # You'll need to implement this method
+                
+                for i, chunk in enumerate(sms_chunks, start=1):
+                    schedule_time = datetime.combine(relative_date.date(), datetime.min.time().replace(hour=hour_, minute=minute_+i))
+                    
+                    schedule, _ = CrontabSchedule.objects.get_or_create(
+                        minute=schedule_time.minute,
+                        hour=schedule_time.hour,
+                        day_of_week='*',
+                        day_of_month=relative_date.day,
+                        month_of_year=relative_date.month,
+                        timezone=desired_timezone
+                    )
+                    
+                    PeriodicTask.objects.create(
+                        crontab=schedule,
+                        name=f'Send SMS Assignment - {student.name} - {assignment.id}--{index}-{i}',
+                        task='messenger.tasks.sms_manager.send_sms',  # You'll need to create this task
+                        args=json.dumps([student.phone_number, chunk]),
+                    )
                 
             if course_format == 'W':
                 # handle whatsapp logic
@@ -837,3 +996,135 @@ def schedule_assignments(course_format,student_id,id,minute_=1, hour_=1, generat
             
         except Exception as err:
             print(err)
+
+
+
+
+
+@shared_task
+def ai_bible_sop_assistant(question, context_type="both"):
+    """AI assistant for Bible and Spirit of Prophecy questions"""
+    try:
+        system_prompt = """
+        You are a knowledgeable assistant specializing in Biblical knowledge and the Spirit of Prophecy writings. 
+        Your responses should be:
+        1. Accurate and based only on Biblical texts and Spirit of Prophecy writings
+        2. Include relevant scripture references
+        3. Provide context when possible
+        4. If uncertain, clearly state limitations
+        5. Respectful and educational in tone
+        
+        Only answer questions related to:
+        - Biblical interpretation and study
+        - Spirit of Prophecy writings by Ellen G. White
+        - Seventh-day Adventist theology and doctrine
+        - Christian living and spiritual growth
+        """
+        
+        if context_type == "bible":
+            system_prompt += "\nFocus primarily on Biblical references and interpretations."
+        elif context_type == "sop":
+            system_prompt += "\nFocus primarily on Spirit of Prophecy writings and Ellen G. White's counsel."
+        
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": question}
+        ]
+        
+        body = {
+            "model": "gpt-4",
+            "messages": messages,
+            "temperature": 0.3,  # Lower temperature for more consistent responses
+            "max_tokens": 1000
+        }
+        
+        headers = {"Authorization": "Bearer " + os.getenv("OPENAI_API_KEY").strip()}
+        
+        response = requests.post("https://api.openai.com/v1/chat/completions", json=body, headers=headers)
+        
+        if response.status_code == 200:
+            result = response.json()
+            return result['choices'][0]['message']['content']
+        else:
+            return "I apologize, but I'm unable to process your question at the moment. Please try again later."
+            
+    except Exception as e:
+        print(f"AI assistant error: {e}")
+        return "I encountered an error while processing your question. Please try again."
+
+def validate_bible_sop_question(question):
+    """Validate if question is appropriate for Bible/SOP context"""
+    bible_keywords = ['bible', 'scripture', 'verse', 'chapter', 'god', 'jesus', 'christ', 'prophet', 'spirit of prophecy', 'ellen white']
+    question_lower = question.lower()
+    
+    return any(keyword in question_lower for keyword in bible_keywords)
+
+
+
+
+@shared_task
+def upload_audio_to_youtube(audio_file_path, title, description=""):
+    """Upload audio file to YouTube"""
+    try:
+        from googleapiclient.discovery import build
+        from googleapiclient.http import MediaFileUpload
+        
+        # You'll need YouTube API credentials
+        creds = get_youtube_credentials()  # Implement this function
+        youtube = build('youtube', 'v3', credentials=creds)
+        
+        # Convert audio to video format (YouTube requires video)
+        video_file_path = convert_audio_to_video(audio_file_path)
+        
+        body = {
+            'snippet': {
+                'title': title,
+                'description': description,
+                'tags': ['bible', 'devotion', 'adventproclaimer'],
+                'categoryId': '22'  # People & Blogs category
+            },
+            'status': {
+                'privacyStatus': 'public'  # or 'private', 'unlisted'
+            }
+        }
+        
+        media = MediaFileUpload(video_file_path, chunksize=-1, resumable=True)
+        
+        insert_request = youtube.videos().insert(
+            part=','.join(body.keys()),
+            body=body,
+            media_body=media
+        )
+        
+        response = None
+        while response is None:
+            status, response = insert_request.next_chunk()
+            if status:
+                print(f"Upload {int(status.progress() * 100)}% complete.")
+        
+        return response['id']  # YouTube video ID
+        
+    except Exception as e:
+        print(f"YouTube upload error: {e}")
+        return None
+
+def convert_audio_to_video(audio_file_path):
+    """Convert audio file to video format for YouTube upload"""
+    try:
+        import subprocess
+        video_file_path = audio_file_path.replace('.mp3', '.mp4')
+        
+        # Use ffmpeg to create a video with static image and audio
+        cmd = [
+            'ffmpeg', '-i', audio_file_path,
+            '-f', 'lavfi', '-i', 'color=c=black:s=1280x720:d=1',
+            '-c:v', 'libx264', '-c:a', 'aac',
+            '-shortest', video_file_path, '-y'
+        ]
+        
+        subprocess.run(cmd, check=True)
+        return video_file_path
+        
+    except Exception as e:
+        print(f"Audio to video conversion error: {e}")
+        return None
